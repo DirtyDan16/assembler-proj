@@ -1,4 +1,4 @@
-The Assembler Proj is a project that is given at course #20465 at the Open University Of Israel.
+The Assembler Proj is a project that is given to students who do course #20465 at the Open University Of Israel.
 
 The idea is to create from scratch using C a fictional (simplified) Assembler for a fictional asm lang.
 
