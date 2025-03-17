@@ -1,0 +1,30 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build assembler",  // <-- This must match the "preLaunchTask" in launch.json
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-g",
+                "-ansi",
+                "-pedantic",
+                "-Wall",
+                "C_Files/assembler.c",
+                "C_Files/initial_scan.c",
+                "C_Files/outputing.c",
+                "C_Files/pre_assembling.c",
+                "C_Files/second_scan.c",
+                "C_Files/utils.c",
+                "-o",
+                "Output_Files/assembler"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Build the assembler program"
+        }
+    ]
+}

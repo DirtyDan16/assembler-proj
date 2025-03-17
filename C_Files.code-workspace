@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../C_Files"
+		},
+		{
+			"path": "../Input_Files"
+		},
+		{
+			"path": "../Output_Files"
+		}
+	],
+	"settings": {}
+}
