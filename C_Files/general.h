@@ -18,7 +18,7 @@ typedef int bool;
 
 
 /* Method names that are needed to be known on a global scope. Those are utility functions that come from utils.c*/
-extern char* concatenateStrings(char* str1,char* str2);
+extern char* concatenate_strings(char* str1,char* str2);
 
 extern int advance_to_char_in_file(FILE *file, char target);
 

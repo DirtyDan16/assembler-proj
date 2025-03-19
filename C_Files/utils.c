@@ -2,7 +2,7 @@
 
 
 /* Function that concatenates two strings without modifying the originals */
-char* concatenateStrings(char* str1,char* str2) {
+char* concatenate_strings(char* str1,char* str2) {
     /* Calculate the length of the resulting string */
     size_t length = strlen(str1) + strlen(str2) + 1;  /* +1 for the null terminator */
     

@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 
 	/* Check if the Assembly files are openable, and if yes, let's start compiling them one file at a time */
 	for (i = 1; i < argc; i++) {
-		input_file_path = concatenateStrings(DIRECTORY_TO_INPUT_FILES, argv[i]);
+		input_file_path = concatenate_strings(DIRECTORY_TO_INPUT_FILES, argv[i]);
 		
 		printf("path: %s\n", input_file_path);
 		

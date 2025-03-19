@@ -30,13 +30,14 @@ void create_output_files(char* input_file_name) {
 
 FILE* create_after_macro_file(char* assembly_file_name) {
 	FILE* am_file;
-	char am_file_name[GEN_LENGTH_OF_STRINGS];
+	char *am_file_path = malloc(strlen(DIRECTORY_TO_INPUT_FILES)+strlen(assembly_file_name)+strlen(".am"));
 	
 	/* Name the output object file to the name of the assembly file we read from, and add the '.am' suffix*/
-	strcpy(am_file_name,assembly_file_name);
-	strcat(am_file_name,".am");
+	strcpy(am_file_path,DIRECTORY_TO_OUTPUT_FILES);
+	strcat(am_file_path,assembly_file_name);
+	strcat(am_file_path,".am");
 
-	am_file = fopen(am_file_name,"wb"); /* Create the after-macro file (the file which has the asm code after translating macros.) and make it writeable.*/
+	am_file = fopen(am_file_path,"wb"); /* Create the after-macro file (the file which has the asm code after translating macros.) and make it writeable.*/
 		
 	return am_file;
 }

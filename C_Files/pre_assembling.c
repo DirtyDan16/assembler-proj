@@ -1,5 +1,5 @@
 #include "pre_assembling.h"
- /*TODO make code go well with node structure*/
+
 static macro_node *head_of_macro_storage=NULL,*cur_macro_node=NULL,*last_macro_node=NULL;
 
 
@@ -26,10 +26,12 @@ void pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name) 
 					printf("found macro\n");
 					/* cur_macro_node is the node that we found has a macro_name that is the same as this line. so we take the contents of the macro and paste them unto the am_file*/
 					fprintf(am_file, "%s", cur_macro_node->val.macro_content);
+
+					continue; /* Continue so you don't print the macro name*/
 				} 
 			/* Check if the line is a macro declaring line
 			we use strtok() to devide an inspected line with a space in it, since macro declaring lines come in the format: "mcro <name>", so we want to check the first word only*/
-				else if (strcmp(strtok(line," "),"mcro") == 0) {
+				if (strcmp(strtok(line," "),"mcro") == 0) {
 					printf("New macro being declared!\n");
 
 					ptr_to_remaining_of_macro_line = (strchr(line,'\0')+1); /* Point at the remaining part of the line (the actual name of the macro)*/
@@ -40,8 +42,14 @@ void pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name) 
 					add_a_macro_node_to_list(ptr_to_remaining_of_macro_line);
 
 					state = INSIDE_MACRO_DECLARATION; /* Change state since we've noticed we're inside a macro declaration*/
+
+					continue; /* Continue so you don't print the 'mcro'*/
 				}
-					break;
+
+				fprintf(am_file, "%s", line); /* If you got here, the line that got registered is a regular line, so just print it.*/
+
+
+				break;
 			case INSIDE_MACRO_DECLARATION:
 				/* Check if the line is an end of a macro declaration. if yes, change state to outside of macro declaration and continue reading the next line*/
 				if (strcmp(strtok_copy(line,"\n"), "mcroend") == 0) {
@@ -51,13 +59,19 @@ void pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name) 
 
 				/* Concatenate this line of information to the macro_content field of this macro. a check if it is null is needed since strlen(NULL) is a segfault.*/
 				if (last_macro_node->val.macro_content == NULL) {
-					last_macro_node->val.macro_content = malloc(strlen(line));
+					last_macro_node->val.macro_content = malloc(strlen(line)+1);
+					last_macro_node->val.macro_content[0] = '\0'; /* Init the macro content so we can concatenate to it*/
 				} else {
 					last_macro_node->val.macro_content = realloc(last_macro_node->val.macro_content,
 						strlen(last_macro_node->val.macro_content) + strlen(line) + 1);
 				}
 
-				strcpy(last_macro_node->val.macro_content, line);
+				/* If the program did not manage to get enough storage to store the macro in the list of macro symbols, output an error and free the storage.*/
+				if (last_macro_node->val.macro_content == NULL) {
+					fprintf(stderr, "the program did not manage to get enough storage to store a macro in the list of macro symbols.");
+					free_macro_storage();
+				}
+				strcat(last_macro_node->val.macro_content, line);
 
 
 				break;
@@ -69,7 +83,12 @@ void pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name) 
 
 
 bool check_line_for_macro(char* line) {
-	cur_macro_node = head_of_macro_storage;
+	cur_macro_node = head_of_macro_storage; /* Initialize the current macro node to the head of the list of known macros. */
+	
+	/* If the line does not end with a newline character, add one. (so comarision is with two strings with a \n) */
+	if (strchr(line, '\n') == NULL) {
+		strcat(line, "\n");
+	}
 	
 	printf("going over all macro nodes and comparing\n");
 	
@@ -121,4 +140,22 @@ void add_a_macro_node_to_list(char* found_macro_name) {
 }
 
 
+void free_macro_storage() {
+    macro_node *current = head_of_macro_storage;
+    macro_node *next;
 
+	/* Free each node, and its fields...*/
+    while (current != NULL) {
+        next = current->next;
+        free(current->val.macro_name);
+        free(current->val.macro_content);
+        free(current);
+        current = next;
+    }
+
+    head_of_macro_storage = NULL;
+    cur_macro_node = NULL;
+    last_macro_node = NULL;
+
+	exit(1);
+}
