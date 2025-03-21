@@ -1,7 +1,8 @@
 #ifndef compiling_logic
 #define compiling_logic
+
 /* Define the struct representing an ASM command*/
-typedef struct {
+typedef struct AsmCommand{
     const char *name;  /* Assembly command name*/
     int opcode;        /* Opcode number*/
     int funct;         /* Funct number*/
@@ -27,6 +28,26 @@ static const AsmCommand asmCommands[] = {
     {"stop", 15, 0}
 };
 
+/*
+ ASM Command values in an array format.
+const char* list_of_asm_command_names[] = {"mov","cmp","add","sub","lea","clr","not","inc","dec","jmp","bne","jsr","red","prn","rts","stop"};
+const int list_of_opcode_numbers[] = {0,1,2,4,5,9,12,13,14,15};
+const int list_of_funct_numbers[] = {1,2,3,4};
+*/
+
+static const char* registers[] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
+
+static const char* addressingModes[] = {"immediate", "direct", "register", "relative"};
+static const char* directiveCommands[] = {".data", ".string", ".entry", ".extern"};
+
+/* The different states for when you go over a read line in the sceond scan.*/
+enum read_line_type {
+    COMMAND,
+    DIRECTIVE,
+    LABEL,
+    EMPTY
+};
+
 /* The number of bits the compiler shall shift when wanting to get to a specific position of an Instruction Ta */
 #define INDEX_OF_OPCODE_BYTE 18
 #define INDEX_OF_FUNCT_BYTE 3
@@ -43,4 +64,3 @@ static const AsmCommand asmCommands[] = {
 
 
 #endif
-

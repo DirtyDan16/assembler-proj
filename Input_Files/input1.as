@@ -1,18 +1,18 @@
-mov()
-cmp()
+mov
+cmp
 mcro apple
-b()
+b
 mcroend
-d()
-add()
+d
+add
 apple
-sub()
+sub
 mcro orange
-just()
-dance()
+just
+dance
 mcroend
-lea()
-s()
+lea
+s
 orange
-s()
+s
 orange

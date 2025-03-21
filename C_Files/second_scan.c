@@ -1,11 +1,6 @@
 #include "second_scan.h"
 
-/*
- ASM Command values in an array format.
-const char* list_of_asm_command_names[] = {"mov","cmp","add","sub","lea","clr","not","inc","dec","jmp","bne","jsr","red","prn","rts","stop"};
-const int list_of_opcode_numbers[] = {0,1,2,4,5,9,12,13,14,15};
-const int list_of_funct_numbers[] = {1,2,3,4};
-*/
+enum read_line_type state_of_read_line;
 
 void compile(FILE* start_of_assembly_file_pointer,char* input_file_name) {
 	FILE* input_file_pointer = start_of_assembly_file_pointer; /* Have a tracker of which line we are corrently reading from. */
@@ -26,12 +21,35 @@ void compile(FILE* start_of_assembly_file_pointer,char* input_file_name) {
 This function gets a recived line that comes from an ASM file and determines which type of line it is.
 This is a state machine.
 */
-/* TODO: state machine lol*/
 void go_over_read_line(char* chosen_line) {
-	/*char* machine_code_representation_of_this_line;*/
+	char* machine_code_representation_of_this_line;
 	
-	/* Go over the different types of lines this line could be, and compile that line to machine code accordingly to that type. */
-	
+	if (is_empty(chosen_line) || is_comment(chosen_line) ) return;
+
+	/* if we don't know what state we are at, determine it*/
+	if (state_of_read_line == NULL) {
+		
+	} else {
+		
+	}
+
+	switch (state_of_read_line)
+	{
+	case COMMAND:
+		/* code */
+		break;
+	case DIRECTIVE:
+		/* code */
+		break;
+	case LABEL:
+		/* code */
+		break;
+	case EMPTY:
+		
+		break;	
+	default:
+		break;
+	}
 	/*if ()*/
 	
 	
@@ -43,13 +61,6 @@ void go_over_read_line(char* chosen_line) {
 }
 
 int compile_asm_command_to_machine_code(char* read_command) {
-	/* Checking if the line is structured correctly */
-	/* return if there is a missing parenthesis or the opening parenthesis is after the closing one. */
-	if (!strchr(read_command,'(') || !strchr(read_command,')') || strchr(read_command, '(') > strchr(read_command, ')')) {
-		fprintf(stderr, "Error: Invalid assembly instruction. The parenthesis of the command aren't placed as they should. representing 0\n");;
-		return 0; 
-	} 
-
 	int machine_code_rep_of_command = 0,i;
 	char* read_command_name = strtok(read_command,"("); /* Get the command name from the command line. We know that we should look for a '(' which indicated the end of the command name. if no '(' present, return null */
 	bool has_command_been_found = false;
@@ -75,4 +86,20 @@ int compile_asm_command_to_machine_code(char* read_command) {
 	
 	/*temp*/
 	return machine_code_rep_of_command;
+}
+
+/* checks if this Sentence is empty or not and return a boolean val accordingly*/
+bool is_empty(char* line) {
+	char cur;
+	while (cur = getc(line) != '\0') {
+		if (!isspace(cur)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/* checks if this Sentence is a comment or not and return a boolean val accordingly*/
+bool is_comment(char* line) {
+	return line[0] == ';';
 }

@@ -111,6 +111,10 @@ bool check_line_for_macro(char* line) {
 void add_a_macro_node_to_list(char* found_macro_name) {
 	/* Create and initialize the new macro node. its macro name will be the name we found in 'line', and we make sure its next field is null. */
 	macro_node* new_macro_node = malloc(sizeof(macro_node));
+	if (new_macro_node == NULL) {
+		fprintf(stderr, "the program did not manage to get enough storage to store a macro in the list of macro symbols.");
+		free_macro_storage();
+	}
 	
 	/* Output error if no storage was managed to be given*/
 	if (new_macro_node == NULL) {
@@ -120,9 +124,13 @@ void add_a_macro_node_to_list(char* found_macro_name) {
 	
 	/* Allocate storage to where the macro name will be stored, and if can be done, copy the ~value~ of found_macro_name unto the feild. */
 	new_macro_node->val.macro_name = malloc(strlen(found_macro_name) + 1);
-	if (new_macro_node->val.macro_name != NULL) {
-		strcpy(new_macro_node->val.macro_name, found_macro_name);
+	if (new_macro_node->val.macro_name == NULL) {
+		fprintf(stderr, "the program did not manage to get enough storage to store a macro in the list of macro symbols.");
+		free_macro_storage();
 	}
+
+	strcpy(new_macro_node->val.macro_name, found_macro_name);
+
 	new_macro_node->val.macro_content = NULL;
 	new_macro_node->next = NULL;
 	
@@ -139,7 +147,9 @@ void add_a_macro_node_to_list(char* found_macro_name) {
 	last_macro_node = new_macro_node;
 }
 
-
+/**
+ * This func Frees all the storage that was allocated for the macro nodes. Used typically for crashes.
+ */
 void free_macro_storage() {
     macro_node *current = head_of_macro_storage;
     macro_node *next;
