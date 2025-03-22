@@ -28,7 +28,6 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name)
 			case OUTSIDE:
 			/* If we found a macro, then take the contents of the macro and write them unto the am_file*/
 				if (check_line_for_macro(line)) {
-					printf("found macro\n");
 					/* cur_macro_node is the node that we found has a macro_name that is the same as this line. so we take the contents of the macro and paste them unto the am_file*/
 					fprintf(am_file, "%s", cur_macro_node->val.macro_content);
 
@@ -36,7 +35,7 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name)
 				} 
 			/* Check if the line is a macro declaring line
 			we use strtok() to devide an inspected line with a space in it, since macro declaring lines come in the format: "mcro <name>", so we want to check the first word only*/
-				if (strcmp(strtok(line," "),"mcro") == 0) {
+				if (strcmp(strtok_copy(line," "),"mcro") == 0) {
 					printf("New macro being declared!\n");
 
 					ptr_to_remaining_of_macro_line = (strchr(line,'\0')+1); /* Point at the remaining part of the line (the actual name of the macro)*/
@@ -90,29 +89,26 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name)
 }
 
 
-bool check_line_for_macro(char* line) {
+bool check_line_for_macro(char* chosen_line) {
 	cur_macro_node = head_of_macro_storage; /* Initialize the current macro node to the head of the list of known macros. */
 	
-	/* If the line does not end with a newline character, add one. (so comarision is with two strings with a \n) */
-	if (strchr(line, '\n') == NULL) {
-		strcat(line, "\n");
+	/* If the chosen_line does not end with a newline character, add one. (so comarision is with two strings with a \n) */
+	if (strchr(chosen_line, '\n') == NULL) {
+		strcat(chosen_line, "\n");
 	}
 	
-	printf("going over all macro nodes and comparing\n");
 	
 	/* Go over all the elements in the storage of known macros. if the name of the line correspounds to a known macro, return true (there is a macro name like this name) otherwise return false*/
 	while (cur_macro_node != NULL) {
-		if (strcmp(line,cur_macro_node->val.macro_name)==0) {
-			printf("read line is a macro!\n");
+		if (strcmp(chosen_line,cur_macro_node->val.macro_name)==0) {
+			printf("read line is a macro! (%s)\n",chosen_line);
 			return true;
 		}
-		printf("%s with %s\n",line,cur_macro_node->val.macro_name);
 		cur_macro_node = cur_macro_node->next; /* advance to the next macro node in the list*/
 
 	}
 	
 	/* If we got here, it means there isn't a macro in this line. returning false so we don't try to translate anything.*/
-	printf("read line is not a macro.\n");
 	return false;
 }
 

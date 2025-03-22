@@ -23,7 +23,7 @@ void create_output_files(char* input_file_name) {
 
 	strcat(object_file_name,strcat(input_file_name,".ob")); /* Name the output object file to the name of the assembly file we read from, and add the '.ob' suffix*/
 
-	fopen(object_file_name,"wb"); /* Create the object file (the file which will have the machine code) and make it writeable.*/
+	fopen(object_file_name,"w"); /* Create the object file (the file which will have the machine code) and make it writeable.*/
 	
 }
 
@@ -37,7 +37,7 @@ FILE* create_after_macro_file(char* assembly_file_name) {
 	strcat(am_file_path,assembly_file_name);
 	strcat(am_file_path,".am");
 
-	am_file = fopen(am_file_path,"wb"); /* Create the after-macro file (the file which has the asm code after translating macros.) and make it writeable.*/
+	am_file = fopen(am_file_path,"w+"); /* Create the after-macro file (the file which has the asm code after translating macros.) and make it writeable.*/
 		
 	return am_file;
 }

@@ -37,7 +37,6 @@ int main(int argc, char *argv[]) {
 
 		am_file = pre_assembling(assembly_file_pointer, assembly_file_name);
 		initial_scan(am_file);
-		compile(assembly_file_pointer, assembly_file_name);
 	}
 	return 0;
 }

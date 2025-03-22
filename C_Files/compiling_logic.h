@@ -30,14 +30,20 @@ static const AsmCommand asmCommands[] = {
 
 /*
  ASM Command values in an array format.
-const char* list_of_asm_command_names[] = {"mov","cmp","add","sub","lea","clr","not","inc","dec","jmp","bne","jsr","red","prn","rts","stop"};
+
 const int list_of_opcode_numbers[] = {0,1,2,4,5,9,12,13,14,15};
 const int list_of_funct_numbers[] = {1,2,3,4};
 */
 
-/*static const char* registers[] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};*/
 
-/*static const char* addressingModes[] = {"immediate", "direct", "register", "relative"};*/
+/* The different addressing modes that the operands can have */
+enum addressing_mode {
+    IMMEDIATE=0,
+    DIRECT=1,
+    REGISTER=3,
+    RELATIVE=2,
+    NOT_VALID=-1
+};
 
 enum directive_type {
     DATA,
@@ -52,6 +58,31 @@ enum read_line_type {
     DIRECTIVE,
     LABEL,
     EMPTY
+};
+
+typedef struct {
+    char *source_addressing_modes;   /* The addressing modes that the source operand can have */
+    char *target_addressing_modes;  /* The addressing modes that the target operand can have */
+} addressing_modes_for_command;
+
+/* The valid addressing modes for each command's arguments */
+static const addressing_modes_for_command addressing_modes_for_commands[16] = {
+        {"0,1,3", "1,3"},
+        {"0,1,3", "0,1,3"},
+        {"0,1,3", "1,3"},
+        {"0,1,3", "1,3"},
+        {"1", "1,3"},
+        {NULL, "1,3"},
+        {NULL, "1,3"},
+        {NULL, "1,3"},
+        {NULL, "1,3"},
+        {NULL, "1,2"},
+        {NULL, "1,2"},
+        {NULL, "1,2"},
+        {NULL, "1,3"},
+        {NULL, "0,1,3"},
+        {NULL, NULL},
+        {NULL, NULL}
 };
 
 /* The number of bits the compiler shall shift when wanting to get to a specific position of an Instruction Ta */

@@ -50,35 +50,9 @@ static void go_over_read_line(char* chosen_line) {
 /*	machine_code_representation_of_this_line = compile_asm_command_to_machine_code(chosen_line);*/
 	
 /*	printf("\n\t%s\n",machine_code_representation_of_this_line);*/
-	printf("\n\t%d\n",compile_asm_command_to_machine_code(chosen_line));
+	/*printf("\n\t%d\n",compile_asm_command_to_machine_code(chosen_line));*/
 }
 
-int compile_asm_command_to_machine_code(char* read_command) {
-	int machine_code_rep_of_command = 0,i;
-	char* read_command_name = strtok(read_command,"("); /* Get the command name from the command line. We know that we should look for a '(' which indicated the end of the command name. if no '(' present, return null */
-	bool has_command_been_found = false;
-	for (i = 0; i< NUM_OF_ASM_COMMANDS; i++) {
-		/* Check if the read command name is an actual command name that's part of our imaginary assembly lang.
-		   If it is, get the machine code rep of the command via bit shifting to get to the wanted places of the Mila.
-		 */
-		
-		if (strcmp(asmCommands[i].name,read_command_name) == 0) {
-			machine_code_rep_of_command += asmCommands[i].opcode << INDEX_OF_OPCODE_BYTE;
-			machine_code_rep_of_command += asmCommands[i].opcode << INDEX_OF_FUNCT_BYTE;
-			has_command_been_found=true;
-			break;
-		}
-	}
-	/* returning 0 if the command is invalid */
-	if (!has_command_been_found) {
-		fprintf(stderr, "The program got an invalid assembly instruction. representing 0.");
-		return 0; 
-	}
-	
-	
-	
-	/*temp*/
-	return machine_code_rep_of_command;
-}
+
 
 
