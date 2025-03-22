@@ -35,9 +35,9 @@ const int list_of_opcode_numbers[] = {0,1,2,4,5,9,12,13,14,15};
 const int list_of_funct_numbers[] = {1,2,3,4};
 */
 
-static const char* registers[] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
+/*static const char* registers[] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};*/
 
-static const char* addressingModes[] = {"immediate", "direct", "register", "relative"};
+/*static const char* addressingModes[] = {"immediate", "direct", "register", "relative"};*/
 
 enum directive_type {
     DATA,

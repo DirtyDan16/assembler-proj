@@ -61,6 +61,9 @@
     "compiling_logic.h": "c",
     "pre_assembling.h": "c",
     "assembler_data_structures.h": "c",
-    "general.h": "c"
+    "general.h": "c",
+    "assembler.h": "c",
+    "initial_scan.h": "c",
+    "ctype.h": "c"
   }
 }

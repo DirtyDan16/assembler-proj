@@ -2,9 +2,14 @@
 
 static macro_node *head_of_macro_storage=NULL,*cur_macro_node=NULL,*last_macro_node=NULL;
 
-
-
-
+/**
+ * This function is the first step of the assembly process. It goes over the assembly file and looks for macros. If it finds a macro, it will store it in a list of known macros.
+ * If it finds a macro name in the assembly file, it will replace it with the contents of the macro.
+ * 
+ * @param start_of_assembly_file_pointer - The pointer to the start of the assembly file.
+ * @param input_file_name - The name of the assembly file.
+ * @return FILE* - The pointer to the start of the after-macro file.
+ */
 FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name) {
 	FILE* cur_asm_file_line_ptr = start_of_assembly_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	FILE* am_file = create_after_macro_file(input_file_name); /* Create the after-macro file. we will write unto it each line we go from from the og asm file. */

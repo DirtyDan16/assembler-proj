@@ -19,19 +19,12 @@ void compile(FILE* start_of_assembly_file_pointer,char* input_file_name) {
 
 /*
 This function gets a recived line that comes from an ASM file and determines which type of line it is.
-This is a state machine.
 */
 static void go_over_read_line(char* chosen_line) {
-	char* machine_code_representation_of_this_line;
+	/*char* machine_code_representation_of_this_line;*/
 	
 	if (is_empty(chosen_line) || is_comment(chosen_line) ) return;
 
-	/* if we don't know what state we are at, determine it*/
-	if (state_of_read_line == NULL) {
-		
-	} else {
-		
-	}
 
 	switch (state_of_read_line)
 	{
@@ -88,18 +81,4 @@ int compile_asm_command_to_machine_code(char* read_command) {
 	return machine_code_rep_of_command;
 }
 
-/* checks if this Sentence is empty or not and return a boolean val accordingly*/
-bool is_empty(char* line) {
-	char cur;
-	while (cur = getc(line) != '\0') {
-		if (!isspace(cur)) {
-			return false;
-		}
-	}
-	return true;
-}
 
-/* checks if this Sentence is a comment or not and return a boolean val accordingly*/
-bool is_comment(char* line) {
-	return line[0] == ';';
-}

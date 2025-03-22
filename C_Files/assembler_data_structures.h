@@ -9,12 +9,10 @@ typedef struct macro {
 } macro;
 
 /* Define the struct representing a macro node*/
-struct macro_node {
+typedef struct macro_node {
 	macro val;
 	struct macro_node* next;
-};
-
-typedef struct macro_node macro_node;
+} macro_node;
 
 /* Define the struct representing a label*/
 typedef struct label {
@@ -32,9 +30,9 @@ typedef struct label_node {
 
 
 
-mila instrcution_table[GEN_STORAGE_SIZE]; /* The instruction table that will be used to store the instructions of the assembly file. */
-mila data_table[GEN_STORAGE_SIZE]; /* The data table that will be used to store the data of the assembly file. */
-mila IC = 100; /* The Instruction Counter. */
-mila DC = 0; /* The Data Counter. */
+extern mila instrcution_table[GEN_STORAGE_SIZE]; /* The instruction table that will be used to store the instructions of the assembly file. */
+extern mila data_table[GEN_STORAGE_SIZE]; /* The data table that will be used to store the data of the assembly file. */
+extern mila IC; /* The Instruction Counter. */
+extern mila DC; /* The Data Counter. */
 
 #endif

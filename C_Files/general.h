@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define GEN_LENGTH_OF_STRINGS 100 /* Default length of defining new strings.*/
 

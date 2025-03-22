@@ -1,6 +1,13 @@
 #include "initial_scan.h"
 
-static label_node*  head_of_label_table = NULL, * tail_of_label_table = NULL, * current_label_node = NULL;
+static label_node*  head_of_label_table = NULL, * tail_of_label_table = NULL;
+/* * current_label_node = NULL;*/
+
+mila instrcution_table[GEN_STORAGE_SIZE] = {0}; /* The instruction table that will be used to store the instructions of the assembly file. */
+mila data_table[GEN_STORAGE_SIZE] = {0}; /* The data table that will be used to store the data of the assembly file. */
+mila IC = 100; /* The Instruction Counter. */
+mila DC = 0; /* The Data Counter. */
+
 
 void initial_scan(FILE* start_of_am_file_pointer) {
 	FILE* input_file_pointer = start_of_am_file_pointer; /* Have a tracker of which line we are corrently reading from. */
@@ -23,9 +30,9 @@ static void go_over_read_line(char* chosen_line) {
 	if (is_empty(chosen_line) || is_comment(chosen_line)) return;
 
 	/* Check if the line has a label attached to it. if it has, already get the name from it in the if condition*/
-	if (label_name = is_valid_label(chosen_line)) {
+	if ((label_name = is_valid_label(chosen_line)) != NULL) {
 		has_label = true;
-		chosen_line = strchr(chosen_line, " "); /* Skip to after the label*/
+		chosen_line = strchr(chosen_line, ' '); /* Skip to after the label*/
 
 		if (chosen_line == NULL) {
 			fprintf(stderr, "There's a Label without a command or directive.\n");
@@ -68,6 +75,12 @@ void handle_directive(char* line) {
 	
 }
 
+void handle_command(char* command) {
+}
+
+void handle_extern_directive(char* extern_name) {
+}
+
 void handle_entry_directive(char* entry) {
 	char* entry_name = strtok_copy(entry, " ");
 
@@ -82,7 +95,6 @@ void handle_entry_directive(char* entry) {
 
 
 void handle_string_directive(char* string) {
-	char* cur_char = NULL;
 	int char_in_str_value_as_int;
 	 
 	if (string == NULL) {
@@ -128,7 +140,7 @@ char* is_valid_label(char* line) {
 	/* Look for the label indentifier (:). if we have found it, it means this is a label.
 		Note that we use strtok_copy() to get the label name because strtok() changes the string it's working on.
 	*/
-	label_name = strtok_copy(line, ':');
+	label_name = strtok_copy(line, ":");
 
 	return label_name;
 }
@@ -152,12 +164,10 @@ void add_label_to_table(char* label_name, char type) {
 	label new_label;
 	label_node* new_label_node;
 
-	/* Allocate memory for the new label */
+	/* Allocate memory for the new label name */
 	new_label.label_name = (char*)malloc(strlen(label_name) + 1);
-	new_label.label_address = malloc(sizeof(int));
-	new_label.label_type = malloc(sizeof(char));
 
-	if (new_label.label_name == NULL || new_label.label_address == NULL || new_label.label_type == NULL) {
+	if (new_label.label_name == NULL) {
 		fprintf(stderr, "Memory allocation failed. A Label has not managed to be added to table of Labels.\n");
 		exit(1);
 	}
@@ -188,4 +198,20 @@ void add_label_to_table(char* label_name, char type) {
 		tail_of_label_table = new_label_node;
 	}
 
+}
+
+/* checks if this Sentence is empty or not and return a boolean val accordingly*/
+bool is_empty(char* line) {
+	while (*line != '\0') {
+		if (!isspace(*line)) {
+			return false;
+		}
+		line++; /* Move to the next character in the line */
+	}
+	return true;
+}
+
+/* checks if this Sentence is a comment or not and return a boolean val accordingly*/
+bool is_comment(char* line) {
+	return line[0] == ';';
 }
