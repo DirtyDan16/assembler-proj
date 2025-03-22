@@ -21,7 +21,7 @@ void compile(FILE* start_of_assembly_file_pointer,char* input_file_name) {
 This function gets a recived line that comes from an ASM file and determines which type of line it is.
 This is a state machine.
 */
-void go_over_read_line(char* chosen_line) {
+static void go_over_read_line(char* chosen_line) {
 	char* machine_code_representation_of_this_line;
 	
 	if (is_empty(chosen_line) || is_comment(chosen_line) ) return;

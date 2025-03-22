@@ -22,6 +22,8 @@ int main(int argc, char *argv[]) {
 
 	/* Check if the Assembly files are openable, and if yes, let's start compiling them one file at a time */
 	for (i = 1; i < argc; i++) {
+		FILE* am_file = NULL;
+
 		input_file_path = concatenate_strings(DIRECTORY_TO_INPUT_FILES, argv[i]);
 		
 		printf("path: %s\n", input_file_path);
@@ -33,7 +35,8 @@ int main(int argc, char *argv[]) {
 
 		assembly_file_name = strtok(argv[i], "."); /* Get the current assembly file name (without the ".as" suffix). Will be used to name the output files. */
 
-		pre_assembling(assembly_file_pointer, assembly_file_name);
+		am_file = pre_assembling(assembly_file_pointer, assembly_file_name);
+		initial_scan(am_file);
 		compile(assembly_file_pointer, assembly_file_name);
 	}
 	return 0;

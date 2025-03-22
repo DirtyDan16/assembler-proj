@@ -38,7 +38,13 @@ const int list_of_funct_numbers[] = {1,2,3,4};
 static const char* registers[] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
 
 static const char* addressingModes[] = {"immediate", "direct", "register", "relative"};
-static const char* directiveCommands[] = {".data", ".string", ".entry", ".extern"};
+
+enum directive_type {
+    DATA,
+    STRING,
+    ENTRY,
+    EXTERN
+};
 
 /* The different states for when you go over a read line in the sceond scan.*/
 enum read_line_type {

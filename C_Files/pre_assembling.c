@@ -5,7 +5,7 @@ static macro_node *head_of_macro_storage=NULL,*cur_macro_node=NULL,*last_macro_n
 
 
 
-void pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name) {
+FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name) {
 	FILE* cur_asm_file_line_ptr = start_of_assembly_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	FILE* am_file = create_after_macro_file(input_file_name); /* Create the after-macro file. we will write unto it each line we go from from the og asm file. */
 	char line[GEN_LENGTH_OF_STRINGS] = {0}; /* This line stores each time a line from the asm file. (fgets() puts the info in it) */
@@ -79,6 +79,9 @@ void pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name) 
 				break;
 		}
 	}
+
+	fseek(am_file, 0, SEEK_SET); /* Go back to the start of the file so we can read from the start of the file.*/
+	return am_file;
 }
 
 

@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 #define GEN_LENGTH_OF_STRINGS 100 /* Default length of defining new strings.*/
-#define GEN_STORAGE_SIZE 50
+
 
 #define DIRECTORY_TO_INPUT_FILES "Input_Files/"
 #define DIRECTORY_TO_OUTPUT_FILES "Output_Files/"
@@ -16,6 +16,7 @@ typedef int bool;
 #define true 1
 #define false 0
 
+typedef int mila;
 
 /* Method names that are needed to be known on a global scope. Those are utility functions that come from utils.c*/
 extern char* concatenate_strings(char* str1,char* str2);

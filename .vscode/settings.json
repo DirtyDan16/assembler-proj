@@ -58,6 +58,9 @@
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
     "second_scan.h": "c",
-    "compiling_logic.h": "c"
+    "compiling_logic.h": "c",
+    "pre_assembling.h": "c",
+    "assembler_data_structures.h": "c",
+    "general.h": "c"
   }
 }
