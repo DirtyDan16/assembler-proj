@@ -65,5 +65,6 @@
     "assembler.h": "c",
     "initial_scan.h": "c",
     "ctype.h": "c"
-  }
+  },
+  "C_Cpp.errorSquiggles": "disabled"
 }

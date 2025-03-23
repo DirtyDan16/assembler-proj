@@ -60,7 +60,7 @@ enum read_line_type {
     EMPTY
 };
 
-typedef struct {
+typedef struct addressing_modes_for_command{
     char *source_addressing_modes;   /* The addressing modes that the source operand can have */
     char *target_addressing_modes;  /* The addressing modes that the target operand can have */
 } addressing_modes_for_command;
@@ -85,13 +85,15 @@ static const addressing_modes_for_command addressing_modes_for_commands[16] = {
         {NULL, NULL}
 };
 
+static const int num_of_arguments_each_command_has[16] = {2,2,2,2,2,1,1,1,1,1,1,1,1,1,0,0};
+
 /* The number of bits the compiler shall shift when wanting to get to a specific position of an Instruction Ta */
 #define INDEX_OF_OPCODE_BYTE 18
 #define INDEX_OF_FUNCT_BYTE 3
 #define INDEX_OF_SOURCE_ADDRESING_MODE_BYTE 16
-#define INDEX_DEST_ADDRESING_MODE_BYTE 11
-#define INDEX_OF_SOURCE_REGISTER 13
-#define INDEX_OF_DEST_REGISTER_BYTE 8
+#define INDEX_OF_TARGET_ADDRESING_MODE_BYTE 11
+#define INDEX_OF_SOURCE_REGISTER_BYTE 13
+#define INDEX_OF_TARGET_REGISTER_BYTE 8
 #define INDEX_OF_THE_A_BYTE 2
 #define INDEX_OF_THE_R_BYTE 1
 #define INDEX_OF_THE_E_BYTE 0

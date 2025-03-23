@@ -27,6 +27,14 @@ typedef struct label_node {
 	struct label_node* next;
 } label_node;
 
+/* Define the struct representing an ASM command sentence.*/
+typedef struct command_sentence {
+	char* command_name;
+	int num_of_arguments;
+	int index_of_command;
+	char* first_argument;
+	char* second_argument;
+} command_sentence;
 
 
 

@@ -74,34 +74,27 @@ bool is_valid_command(char* chosen_line) {
 	return false; 
 }
 
-/* TODO: have a checker for if num of arguments is valid for a given command.*/
 void handle_command(char* command) {
 	mila binary_value_of_command = 0,binary_value_for_first_argument=0,binary_value_for_second_argument=0;
 	mila L = 1; /* The amount of Milas this command will take in the instruction table. Can go up to 3 */
-	
-	/* Get the command name and the arguments */
-	char* command_name = strtok(command," ");
-	char* first_argument = NULL;
-	char* second_argument = NULL;
 
-	/* Determine amount of arguments in this command. Based on the amount, give the different argument variables those values*/
-	/* If there is 2 arguments*/
-	if (strchr(command,',')) { 
-		first_argument = strtok(NULL,",");
-		second_argument = strtok(NULL,"\n");
-	/* If there is 1 or less arguments. If there is no value to give (0 arguments), it'll just give back null to the var (or a value that won't be registered as a type of
-	an argument, ie. white space)*/
-	} else {
-		first_argument = strtok(NULL,"\n");
+	 /* This struct will be handy and convieneient since it gathers all usefull info of this sentence in a singular place! */
+	 command_sentence* cur_command_sentence = make_command_sentence_struct(command);
+	
+
+	if (!check_if_num_of_arguments_are_valid(cur_command_sentence)) {
+		fprintf(stderr, "The program got an invalid assembly instruction.");
+		return;
 	}
 
-	binary_value_of_command += get_binary_value_of_command_name(command_name);
 
-	if (first_argument != NULL) {
-		deal_with_first_parameter(first_argument,command_name,&binary_value_of_command,&L);
+	binary_value_of_command += get_binary_value_of_command_name(cur_command_sentence->index_of_command); /* Get the binary value of the command name*/
 
-		if (second_argument != NULL) {
-			deal_with_second_parameter(second_argument,command_name,&binary_value_of_command,&L);
+	if (cur_command_sentence->first_argument != NULL) {
+		deal_with_first_parameter(cur_command_sentence,&binary_value_of_command,&binary_value_for_first_argument,&L);
+
+		if (cur_command_sentence->second_argument != NULL) {
+			deal_with_second_parameter(cur_command_sentence,&binary_value_of_command,&binary_value_for_second_argument,&L);
 
 		}
 	} 
@@ -110,25 +103,153 @@ void handle_command(char* command) {
 	IC += L;
 }
 
-void deal_with_second_parameter(char* second_argument,char* command_name,mila* cur_binary_value_of_command,mila* L) {
+command_sentence* make_command_sentence_struct(char* command_line) {
+		/* Gather all feilds required to make a strcut for a Command Sentence. */
+		char* command_name = strtok(command_line," ");
+		char* first_argument = NULL;
+		char* second_argument = NULL;
+	
+		int num_of_arguments = 0;
+		int index_of_command = get_index_of_command(command_name); /* Get the index of the command in the array of commands*/
+	
+		command_sentence* cur_command_sentence = (command_sentence*)malloc(sizeof(command_sentence));
+		if (cur_command_sentence == NULL) {
+			fprintf(stderr, "Memory allocation failed.\n");
+			exit(1);
+		}
+
+		/* Determine amount of arguments in this command. Based on the amount, give the different argument variables those values*/
+		/* If there is 2 arguments*/
+		if (strchr(command_line,',')) { 
+			first_argument = strtok(NULL,",");
+			second_argument = strtok(NULL,"\n");
+	
+			num_of_arguments = 2;
+		/* If there is 1 or less arguments. If there is no value to give (0 arguments), it'll just give back null to the var (or a value that won't be registered as a type of 
+		an argument, ie. white space)*/
+		} else {
+			first_argument = strtok(NULL,"\n");
+			num_of_arguments = 1;
+		}
+	
+		/*---------------------------------------------------------------------*/
+	
+		/* Fill the struct with the gathered info */
+		cur_command_sentence->command_name = command_name;
+		cur_command_sentence->num_of_arguments = num_of_arguments;
+		cur_command_sentence->index_of_command = index_of_command;
+		cur_command_sentence->first_argument = first_argument;
+		cur_command_sentence->second_argument = second_argument;
+
+		return cur_command_sentence;
+}
+
+bool check_if_num_of_arguments_are_valid(command_sentence* cur_command_sentence) {
+	int index_of_command = cur_command_sentence->index_of_command;
+	char* first_argument = cur_command_sentence->first_argument;
+	char* second_argument = cur_command_sentence->second_argument;
+	/* If the command is invalid, return false*/
+	if (index_of_command == -1) {
+		return false;
+	}
+
+	/* If the command has 2 arguments, check if there are actually 2 arguments*/
+	if (num_of_arguments_each_command_has[index_of_command] == 2) {
+		if (first_argument == NULL || second_argument == NULL) {
+			return false;
+		}
+	} else if (num_of_arguments_each_command_has[index_of_command] == 1) {
+		/* If the command has 1 argument, check if there is 1 argument*/
+		if (first_argument == NULL) {
+			return false;
+		}
+	} else {
+		/* If the command has 0 arguments, check if there are 0 arguments*/
+		if (first_argument != NULL) {
+			return false;
+		}
+	}
+
+	return true;
+
+}
+
+void deal_with_second_parameter(command_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_second_argument,mila* L) {
 }	
 
-void deal_with_first_parameter(char* first_argument,char* command_name,mila* cur_binary_value_of_command,mila* L) {
-	int type_of_first_argument = determine_type_of_asm_argument(first_argument); /* Determine the type of the first argument*/
-
+void deal_with_first_parameter(command_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_first_argument,mila* L) {
+	int type_of_first_argument = determine_type_of_asm_argument(cur_command_sentence->first_argument); /* Determine the type of the first argument*/
 	/* If the first argument is not valid, output an error and return*/
 	if (type_of_first_argument == NOT_VALID) {
 		fprintf(stderr, "The program got an invalid assembly instruction.");
 		return;
 	}
-	if (!is_argument_valid_for_this_specific_command(type_of_first_argument,command_name,1)) {
+	if (!is_argument_valid_for_this_specific_command(cur_command_sentence,type_of_first_argument,1)) {
 		fprintf(stderr, "The program got an invalid assembly instruction. The first argument is not valid for this command.");
 		return;
 	}
 
 	
 	/* Logic that deals with the type of argument here ~~*/
+
+	/* If the first argument is a register, get the register number and add it to the binary value of the command*/
+	if (type_of_first_argument == REGISTER) {
+		 deal_with_register_type_value(cur_binary_value_of_command,cur_command_sentence,1);
+	/* All other types of arguments require to add an extra Mila, so we'll increment the L value.*/
+	} else {
+		*L += 1;
+		/* At this point of time, in the first scan, we only know how to deal with direct values. So lets check this type only*/
+		if (type_of_first_argument == DIRECT) {
+			deal_with_direct_type_value(cur_binary_value_of_command,binary_value_for_first_argument,cur_command_sentence->first_argument);
+		}
+
+	}
+
 		
+}
+
+/* TODO: complete the impleminatation*/
+void deal_with_direct_type_value(mila* cur_binary_value_of_command,mila* additional_mila,char* direct_type_argument) {
+	int value_of_direct_argument = atoi(direct_type_argument); /* Convert the direct argument to an integer */
+	int binary_value_of_direct_argument = binary_value_of_direct_argument = int_to_binary(value_of_direct_argument); /* Convert the integer to binary */
+
+
+	
+}
+
+void deal_with_register_type_value(mila* cur_binary_value_of_command,command_sentence* cur_command_sentence,int argument_number) {
+	int i;
+
+	/* The number of the register in the registers array*/
+	int register_number=0;
+
+	/* Get the register name from the argument number*/
+	char* register_name = argument_number == 1 ? cur_command_sentence->first_argument : cur_command_sentence->second_argument;
+
+	/* Check which register the argument is and return the register number*/
+	for (i = 0; i < sizeof(registers); i++) {
+		if (strcmp(register_name,registers[i]) == 0) {
+			register_number = i;
+			break;
+		}
+	}
+
+	/* Determine the type of register (source or target). based on that, use bit shifting with the according index and
+	add that value unto the binary value of the first mila.*/
+	if (cur_command_sentence->num_of_arguments == 2) {
+		if (argument_number == 1) { /* Source*/
+			cur_binary_value_of_command += register_number << INDEX_OF_SOURCE_REGISTER_BYTE;
+			cur_binary_value_of_command += REGISTER << INDEX_OF_SOURCE_ADDRESING_MODE_BYTE;
+		}
+		} else if (argument_number == 2) /* Target*/ {
+			cur_binary_value_of_command += register_number << INDEX_OF_TARGET_REGISTER_BYTE;
+			cur_binary_value_of_command += REGISTER << INDEX_OF_TARGET_ADDRESING_MODE_BYTE;
+		}
+	else if (cur_command_sentence->num_of_arguments == 1) { /* If there is only 1 argument, it has to be the target*/
+		cur_binary_value_of_command += register_number << INDEX_OF_TARGET_REGISTER_BYTE;
+		cur_binary_value_of_command += REGISTER << INDEX_OF_TARGET_ADDRESING_MODE_BYTE;
+	} else return;
+	
 }
 
 int get_index_of_command(char* command_name) {
@@ -144,24 +265,33 @@ int get_index_of_command(char* command_name) {
 	return -1;
 }
 
-bool is_argument_valid_for_this_specific_command(int argument_type, char* command_name,int argument_number) {
-	int index_of_command = get_index_of_command(command_name); /* Get the index of the command in the array of commands*/
+bool is_argument_valid_for_this_specific_command(command_sentence* cur_command_sentence,int argument_type,int argument_number) {
+	int num_of_arguments = cur_command_sentence->num_of_arguments; /* Get the number of arguments the command has*/
 
 	/* Check if the argument type is valid for this specific command.
-	 * If the argument number is 1, check if the argument type is valid for the target addressing modes of the command.
-	 * If the argument number is 2, check if the argument type is valid for the source addressing modes of the command.
-	 * 
 	 * Note that we cast the argument type to a char since the addressing modes are stored as chars in the struct.
 	*/
-	if (argument_number == 1) {
-		if (strchr(addressing_modes_for_commands[index_of_command].target_addressing_modes,(char)argument_type) != NULL) {
+
+	/* If the command has 2 arguments, check if the argument type is valid. First arg has to be for source, and Second for target.*/
+	if (num_of_arguments == 2) {
+		if (argument_number == 1) {
+			if (strchr(addressing_modes_for_commands[cur_command_sentence->index_of_command].source_addressing_modes,(char)argument_type) != NULL) {
+				return true;
+			}
+		} else if (argument_number == 2) {
+			if (strchr(addressing_modes_for_commands[cur_command_sentence->index_of_command].target_addressing_modes,(char)argument_type) != NULL) {
+				return true;
+			}
+		}
+	/* If the command has 1 argument, check if the argument type is valid. The argument has to be for target.*/
+	} else if (num_of_arguments == 1) {
+		if (strchr(addressing_modes_for_commands[cur_command_sentence->index_of_command].target_addressing_modes,(char)argument_type) != NULL) {
 			return true;
 		}
-	} else if (argument_number == 2) {
-		if (strchr(addressing_modes_for_commands[index_of_command].source_addressing_modes,(char)argument_type) != NULL) {
-			return true;
-		}
-	}
+	/* If the command has 0 arguments, no need to check since there is no arg.*/
+	} else return true;
+		
+
 
 	return false;
 }
@@ -187,13 +317,12 @@ int determine_type_of_asm_argument(char* argument) {
 	return NOT_VALID;
 }
 
-int get_binary_value_of_command_name(char* read_command) {
+int get_binary_value_of_command_name(int index_of_command) {
 	int machine_code_rep_of_command = 0;
 
-	int index_of_command = get_index_of_command(read_command);
 	if (index_of_command == -1) {
-		fprintf(stderr, "The program got an invalid assembly instruction. representing 0.");
-		return 0; 
+		fprintf(stderr, "The program got an invalid assembly instruction.");
+		return -1;
 	}
 
 	/* Get the opcode and funct values of the command and add them to the machine code representation of the command.

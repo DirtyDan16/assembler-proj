@@ -28,5 +28,6 @@ extern void replace_char_with_null(char *str, char target);
 
 extern char* strtok_copy(char* passed_in_str, char* token);
 
+extern int int_to_binary(int value);
 
 #endif
