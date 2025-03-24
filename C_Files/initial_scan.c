@@ -1,26 +1,21 @@
 #include "initial_scan.h"
 
-static label_node*  head_of_label_table = NULL, * tail_of_label_table = NULL;
-/* * current_label_node = NULL;*/
-
-mila instrcution_table[GEN_STORAGE_SIZE] = {0}; /* The instruction table that will be used to store the instructions of the assembly file. */
-mila data_table[GEN_STORAGE_SIZE] = {0}; /* The data table that will be used to store the data of the assembly file. */
 mila IC = 100; /* The Instruction Counter. */
 mila DC = 0; /* The Data Counter. */
 
 
-void initial_scan(FILE* start_of_am_file_pointer) {
+void initial_scan(FILE* start_of_am_file_pointer,key_data_structures* key_nodes) {
 	FILE* input_file_pointer = start_of_am_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	char line[GEN_LENGTH_OF_STRINGS]= {0}; /* This line stores each time a line from the asm file. (fgets() puts the info in it) */
 
 	printf("\n\tGoing through first scan of the file!.\n");
 	/* As long as there are more lines to read from, read the next line*/
 	while (fgets(line, GEN_LENGTH_OF_STRINGS, input_file_pointer) != NULL) {
-		go_over_read_line(line);
+		go_over_read_line(line,key_nodes);
 	}
 }
 
-static void go_over_read_line(char* chosen_line) {
+static void go_over_read_line(char* chosen_line,key_data_structures* key_nodes) {
 	bool has_label = false;
 	
 	char* label_name = NULL; /* If we have found a label, we'll store it in here*/
@@ -41,10 +36,10 @@ static void go_over_read_line(char* chosen_line) {
 
 	/* Determine which type this sentence is.*/
 	if (is_directive(chosen_line)) {
-		if (has_label) add_label_to_table(label_name, 'd'); /* Add the label name to the table with the 'd' type that stands for data*/
-		handle_directive(chosen_line);
+		if (has_label) add_label_to_table(label_name, 'd',key_nodes->label_nodes); /* Add the label name to the table with the 'd' type that stands for data*/
+		handle_directive(chosen_line,key_nodes);		/* Handle the directive */
 	} else if (is_valid_command(chosen_line)) {
-		if (has_label) add_label_to_table(label_name, 'c'); /* Add the label name to the table with the 'c' type that stands for command*/
+		if (has_label) add_label_to_table(label_name, 'c',key_nodes->label_nodes); /* Add the label name to the table with the 'c' type that stands for command*/
 		handle_command(chosen_line);		/* Handle the command */
 	} else {
 
@@ -334,7 +329,7 @@ int get_binary_value_of_command_name(int index_of_command) {
 }
 
 
-void handle_directive(char* line) {
+void handle_directive(char* line,key_data_structures* key_nodes) {
 	char* directive_name = strtok(line, " "); /* Get the directive name */
 	char* directive_value = strtok(NULL, "\n"); /* Get the directive value. Recall that we need to look for a new line char SPECIFICALLY since values can be seperated by spaces*/
 
@@ -345,9 +340,9 @@ void handle_directive(char* line) {
 
 	/* Check which directive it is and handle it accordingly */
 	if (strcmp(directive_name, ".data") == 0) {
-		handle_data_directive(directive_value);		
+		handle_data_directive(directive_value,key_nodes->data_table);		
 	} else if (strcmp(directive_name, ".string") == 0) {
-		handle_string_directive(directive_value);		
+		handle_string_directive(directive_value,key_nodes->data_table);		
 	} else if (strcmp(directive_name, ".entry") == 0) {
 		handle_entry_directive(directive_value);
 	} else if (strcmp(directive_name, ".extern") == 0) {
@@ -374,7 +369,7 @@ void handle_entry_directive(char* entry) {
 }
 
 
-void handle_string_directive(char* string) {
+void handle_string_directive(char* string,mila* data_table) {
 	int char_in_str_value_as_int;
 	 
 	if (string == NULL) {
@@ -392,7 +387,7 @@ void handle_string_directive(char* string) {
 
 }
 
-void handle_data_directive(char* data) {
+void handle_data_directive(char* data,mila* data_table) {
 	char* data_value = strtok(data, ",");
 	int data_value_as_int;
 	 
@@ -450,7 +445,7 @@ bool is_directive(char* line) {
 	return false;
 }
 
-void add_label_to_table(char* label_name, char type) {
+void add_label_to_table(char* label_name, char type,key_label_nodes* key_nodes) {
 	label new_label;
 	label_node* new_label_node;
 
@@ -479,13 +474,13 @@ void add_label_to_table(char* label_name, char type) {
 	new_label_node->next = NULL;
 
 	/* If the table is empty, make the new label node the head and tail of the table */
-	if (head_of_label_table == NULL) {
-		head_of_label_table = new_label_node;
-		tail_of_label_table = new_label_node;
+	if (key_nodes->head_of_label_storage == NULL) {
+		key_nodes->head_of_label_storage = new_label_node;
+		key_nodes->head_of_label_storage = new_label_node;
 	} else {
 		/* If the table is not empty, add the new label node to the end of the table */
-		tail_of_label_table->next = new_label_node;
-		tail_of_label_table = new_label_node;
+		key_nodes->last_label_node->next = new_label_node;
+		key_nodes->last_label_node = new_label_node;
 	}
 
 }

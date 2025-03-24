@@ -1,6 +1,14 @@
 ; file ps.as
 .entry LIST
 .extern W
+
+mcro APPLE
+add #2,#1
+cmp #5,#-1
+mcroend
+
+APPLE
+
 MAIN: add r3, LIST
 LOOP: prn #48
  lea W, r6
@@ -15,6 +23,9 @@ LOOP: prn #48
  jmp &LOOP
  add L3, L3
 END: stop
+
+APPLE
+
 STR: .string “abcd”
 LIST: .data 6, -9
  .data -100

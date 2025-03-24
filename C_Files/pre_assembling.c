@@ -1,88 +1,34 @@
 #include "pre_assembling.h"
 
-static macro_node *head_of_macro_storage=NULL,*cur_macro_node=NULL,*last_macro_node=NULL;
-
 /**
  * This function is the first step of the assembly process. It goes over the assembly file and looks for macros. If it finds a macro, it will store it in a list of known macros.
  * If it finds a macro name in the assembly file, it will replace it with the contents of the macro.
  * 
  * @param start_of_assembly_file_pointer - The pointer to the start of the assembly file.
  * @param input_file_name - The name of the assembly file.
+ * @param key_nodes - A struct that holds pointers to the head, current, and last nodes of the list of known macros.
  * @return FILE* - The pointer to the start of the after-macro file.
  */
 /* TODO: make it so you can't declare macros that have a name of a asm name, nor the name 'mcro'.
 	macros also must start with a letter, or '_' only!*/
-FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name) {
+FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,key_macro_nodes* key_nodes) {
 	FILE* cur_asm_file_line_ptr = start_of_assembly_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	FILE* am_file = create_after_macro_file(input_file_name); /* Create the after-macro file. we will write unto it each line we go from from the og asm file. */
 	char line[GEN_LENGTH_OF_STRINGS] = {0}; /* This line stores each time a line from the asm file. (fgets() puts the info in it) */
 	
-	char* ptr_to_remaining_of_macro_line=NULL; /* When we find a mcro declaration, this will hold the macro name that is in the same line as the declaration*/
 	
-	enum READING_ASM_FILE_STATES state = OUTSIDE; /* Declare and initialize the state variable */
+	char* state;
+	state = "OUTSIDE"; /* Declare and initialize the state variable */
 	
 	printf("\n\tlooking for macros in file.\n");
 	/* As long as there are more lines to read from, read the next line*/
 	while (fgets(line, GEN_LENGTH_OF_STRINGS, cur_asm_file_line_ptr) != NULL) {
 
-		switch (state)
-		{
-			case OUTSIDE:
-			/* If we found a macro, then take the contents of the macro and write them unto the am_file*/
-				if (check_line_for_macro(line)) {
-					/* cur_macro_node is the node that we found has a macro_name that is the same as this line. so we take the contents of the macro and paste them unto the am_file*/
-					fprintf(am_file, "%s", cur_macro_node->val.macro_content);
-
-					continue; /* Continue so you don't print the macro name*/
-				} 
-			/* Check if the line is a macro declaring line
-			we use strtok() to devide an inspected line with a space in it, since macro declaring lines come in the format: "mcro <name>", so we want to check the first word only*/
-				if (strcmp(strtok_copy(line," "),"mcro") == 0) {
-					printf("New macro being declared!\n");
-
-					ptr_to_remaining_of_macro_line = (strchr(line,'\0')+1); /* Point at the remaining part of the line (the actual name of the macro)*/
-
-					printf(" macro name: %s\n",ptr_to_remaining_of_macro_line);
-			
-					/* Create a new macro node into the list and give its macro field a macro name that is the name that is in 'line'.*/
-					add_a_macro_node_to_list(ptr_to_remaining_of_macro_line);
-
-					state = INSIDE_MACRO_DECLARATION; /* Change state since we've noticed we're inside a macro declaration*/
-
-					continue; /* Continue so you don't print the 'mcro'*/
-				}
-
-				fprintf(am_file, "%s", line); /* If you got here, the line that got registered is a regular line, so just print it.*/
-
-
-				break;
-			case INSIDE_MACRO_DECLARATION:
-				/* Check if the line is an end of a macro declaration. if yes, change state to outside of macro declaration and continue reading the next line*/
-				if (strcmp(strtok_copy(line,"\n"), "mcroend") == 0) {
-					state = OUTSIDE;
-					continue;
-				}
-
-				/* Concatenate this line of information to the macro_content field of this macro. a check if it is null is needed since strlen(NULL) is a segfault.*/
-				if (last_macro_node->val.macro_content == NULL) {
-					last_macro_node->val.macro_content = malloc(strlen(line)+1);
-					last_macro_node->val.macro_content[0] = '\0'; /* Init the macro content so we can concatenate to it*/
-				} else {
-					last_macro_node->val.macro_content = realloc(last_macro_node->val.macro_content,
-						strlen(last_macro_node->val.macro_content) + strlen(line) + 1);
-				}
-
-				/* If the program did not manage to get enough storage to store the macro in the list of macro symbols, output an error and free the storage.*/
-				if (last_macro_node->val.macro_content == NULL) {
-					fprintf(stderr, "the program did not manage to get enough storage to store a macro in the list of macro symbols.");
-					free_macro_storage();
-				}
-				strcat(last_macro_node->val.macro_content, line);
-
-
-				break;
-			default:
-				break;
+		/* Check the state of the program, and act accordingly. */
+		if (strcmp(state,"OUTSIDE") == 0) {
+			state = outside_macro_declaration(line,am_file,state,key_nodes);
+		} else if (strcmp(state,"INSIDE_MACRO_DECLARATION") == 0) {
+			state = inside_macro_declaration_state(line,am_file,state,key_nodes);
 		}
 	}
 
@@ -91,8 +37,79 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name)
 }
 
 
-bool check_line_for_macro(char* chosen_line) {
-	cur_macro_node = head_of_macro_storage; /* Initialize the current macro node to the head of the list of known macros. */
+char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_nodes* key_nodes) {
+	char* ptr_to_remaining_of_macro_line=NULL; /* When we find a mcro declaration, this will hold the macro name that is in the same line as the declaration*/
+
+	/* If the line is empty, just print it and continue to the next line.*/
+	if (is_empty(line)) {
+		fprintf(am_file, "%s", line);
+		return state;
+	}
+
+	/* If we found a macro, then take the contents of the macro and write them unto the am_file*/
+	if (check_line_for_macro(line,key_nodes)) {
+		/* cur_macro_node is the node that we found has a macro_name that is the same as this line. so we take the contents of the macro and paste them unto the am_file*/
+		fprintf(am_file, "%s", key_nodes->cur_macro_node->val.macro_content);
+
+		return state; /* Continue so you don't print the macro name*/
+	} 
+	/* Check if the line is a macro declaring line
+	we use strtok() to devide an inspected line with a space in it, since macro declaring lines come in the format: "mcro <name>", so we want to check the first word only*/
+	if (strcmp(strtok_copy(line," "),"mcro") == 0) {
+		printf("New macro being declared!\n");
+
+		ptr_to_remaining_of_macro_line = (strchr(line,' ')+1); /* Point at the remaining part of the line (the actual name of the macro)*/
+
+		printf(" macro name: %s\n",ptr_to_remaining_of_macro_line);
+
+		/* Create a new macro node into the list and give its macro field a macro name that is the name that is in 'line'.*/
+		add_a_macro_node_to_list(ptr_to_remaining_of_macro_line,key_nodes);
+
+		state = "INSIDE_MACRO_DECLARATION"; /* Change state since we've noticed we're inside a macro declaration*/
+
+		return state; /* Continue so you don't print the 'mcro'*/
+	}
+
+	fprintf(am_file, "%s", line); /* If you got here, the line that got registered is a regular line, so just print it.*/
+	return state;
+}
+
+char* inside_macro_declaration_state(char* line,FILE* am_file,char* state,key_macro_nodes* key_nodes) {
+	/* Get the last macro node in the list of known macros. */
+	macro_node* last_node = key_nodes->last_macro_node;
+
+	/* If the line is empty, just print it and continue to the next line.*/
+	if (is_empty(line)) {
+		fprintf(am_file, "%s", line);
+		return state;
+	}
+	/* Check if the line is an end of a macro declaration. if yes, change state to outside of macro declaration and continue reading the next line*/
+	if (strcmp(strtok_copy(line,"\n"), "mcroend") == 0) {
+		state = "OUTSIDE";
+		return state;
+	}
+
+	/* Concatenate this line of information to the macro_content field of this macro. a check if it is null is needed since strlen(NULL) is a segfault.*/
+	if (last_node->val.macro_content == NULL) {
+		last_node->val.macro_content = malloc(strlen(line)+1);
+		last_node->val.macro_content[0] = '\0'; /* Init the macro content so we can concatenate to it*/
+	} else {
+		last_node->val.macro_content = realloc(last_node->val.macro_content,
+			strlen(last_node->val.macro_content) + strlen(line) + 1);
+	}
+
+	/* If the program did not manage to get enough storage to store the macro in the list of macro symbols, output an error and free the storage.*/
+	if (last_node->val.macro_content == NULL) {
+		fprintf(stderr, "the program did not manage to get enough storage to store a macro in the list of macro symbols.");
+		free_macro_storage(key_nodes);
+	}
+	strcat(last_node->val.macro_content, line);
+
+	return state;
+}
+
+bool check_line_for_macro(char* chosen_line,key_macro_nodes* key_nodes) {
+	key_nodes->cur_macro_node = key_nodes->head_of_macro_storage; /* Initialize the current macro node to the head of the list of known macros. */
 	
 	/* If the chosen_line does not end with a newline character, add one. (so comarision is with two strings with a \n) */
 	if (strchr(chosen_line, '\n') == NULL) {
@@ -101,12 +118,12 @@ bool check_line_for_macro(char* chosen_line) {
 	
 	
 	/* Go over all the elements in the storage of known macros. if the name of the line correspounds to a known macro, return true (there is a macro name like this name) otherwise return false*/
-	while (cur_macro_node != NULL) {
-		if (strcmp(chosen_line,cur_macro_node->val.macro_name)==0) {
+	while (key_nodes->cur_macro_node != NULL) {
+		if (strcmp(chosen_line,key_nodes->cur_macro_node->val.macro_name)==0) {
 			printf("read line is a macro! (%s)\n",chosen_line);
 			return true;
 		}
-		cur_macro_node = cur_macro_node->next; /* advance to the next macro node in the list*/
+		key_nodes->cur_macro_node = key_nodes->cur_macro_node->next; /* advance to the next macro node in the list*/
 
 	}
 	
@@ -114,25 +131,19 @@ bool check_line_for_macro(char* chosen_line) {
 	return false;
 }
 
-void add_a_macro_node_to_list(char* found_macro_name) {
+void add_a_macro_node_to_list(char* found_macro_name,key_macro_nodes* key_nodes) {
 	/* Create and initialize the new macro node. its macro name will be the name we found in 'line', and we make sure its next field is null. */
 	macro_node* new_macro_node = malloc(sizeof(macro_node));
 	if (new_macro_node == NULL) {
 		fprintf(stderr, "the program did not manage to get enough storage to store a macro in the list of macro symbols.");
-		free_macro_storage();
-	}
-	
-	/* Output error if no storage was managed to be given*/
-	if (new_macro_node == NULL) {
-		fprintf(stderr, "the program did not manage to get enough storage to store a macro in the list of macro symbols.");
-		return;
+		free_macro_storage(key_nodes);
 	}
 	
 	/* Allocate storage to where the macro name will be stored, and if can be done, copy the ~value~ of found_macro_name unto the feild. */
 	new_macro_node->val.macro_name = malloc(strlen(found_macro_name) + 1);
 	if (new_macro_node->val.macro_name == NULL) {
 		fprintf(stderr, "the program did not manage to get enough storage to store a macro in the list of macro symbols.");
-		free_macro_storage();
+		free_macro_storage(key_nodes);
 	}
 
 	strcpy(new_macro_node->val.macro_name, found_macro_name);
@@ -143,21 +154,21 @@ void add_a_macro_node_to_list(char* found_macro_name) {
 
 	/* Attach the new node to the list */
 	/* Check if there is actually a node*/
-	if (last_macro_node != NULL) {
-		last_macro_node->next = new_macro_node;
+	if (key_nodes->last_macro_node != NULL) {
+		key_nodes->last_macro_node->next = new_macro_node;
 	} else {
-		head_of_macro_storage = new_macro_node;  /* Initialize head if list is empty*/
+		key_nodes->head_of_macro_storage = new_macro_node;  /* Initialize head if list is empty*/
 	}
 
 	/* Update the last node pointer */
-	last_macro_node = new_macro_node;
+	key_nodes->last_macro_node = new_macro_node;
 }
 
 /**
  * This func Frees all the storage that was allocated for the macro nodes. Used typically for crashes.
  */
-void free_macro_storage() {
-    macro_node *current = head_of_macro_storage;
+void free_macro_storage(key_macro_nodes* key_nodes) {
+    macro_node *current = key_nodes->head_of_macro_storage;
     macro_node *next;
 
 	/* Free each node, and its fields...*/
@@ -169,9 +180,9 @@ void free_macro_storage() {
         current = next;
     }
 
-    head_of_macro_storage = NULL;
-    cur_macro_node = NULL;
-    last_macro_node = NULL;
+    key_nodes->head_of_macro_storage = NULL;
+    key_nodes->cur_macro_node = NULL;
+    key_nodes->last_macro_node = NULL;
 
 	exit(1);
 }
