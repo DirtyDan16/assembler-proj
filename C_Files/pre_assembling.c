@@ -10,6 +10,8 @@ static macro_node *head_of_macro_storage=NULL,*cur_macro_node=NULL,*last_macro_n
  * @param input_file_name - The name of the assembly file.
  * @return FILE* - The pointer to the start of the after-macro file.
  */
+/* TODO: make it so you can't declare macros that have a name of a asm name, nor the name 'mcro'.
+	macros also must start with a letter, or '_' only!*/
 FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name) {
 	FILE* cur_asm_file_line_ptr = start_of_assembly_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	FILE* am_file = create_after_macro_file(input_file_name); /* Create the after-macro file. we will write unto it each line we go from from the og asm file. */
