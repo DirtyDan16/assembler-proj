@@ -69,17 +69,21 @@ char* strtok_copy(char* passed_in_str , char* token) {
 
 
 int int_to_binary(int value) {
+    if (value == 0) {
+        return 0;
+    }
+
+    uint unsigned_value = (uint)value;
     int binary_value = 0;
     int base = 1;
     int remainder;
-    
+
     /* Convert the integer to binary */
-    while (value > 0) {
-        remainder = value % 2;
+    while (unsigned_value > 0) {
+        remainder = unsigned_value % 2;
         binary_value += remainder * base;
-        value /= 2;
+        unsigned_value /= 2;
         base *= 10;
     }
-    
+
     return binary_value;
-}

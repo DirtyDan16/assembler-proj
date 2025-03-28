@@ -97,6 +97,7 @@ static const int num_of_arguments_each_command_has[16] = {2,2,2,2,2,1,1,1,1,1,1,
 #define INDEX_OF_THE_A_BYTE 2
 #define INDEX_OF_THE_R_BYTE 1
 #define INDEX_OF_THE_E_BYTE 0
+#define INDEX_OF_THE_BIT_AFTER_A 3
 
 /* */
 #define NUM_OF_ASM_COMMANDS 16

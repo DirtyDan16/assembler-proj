@@ -84,6 +84,9 @@ void handle_command(char* command) {
 
 
 	binary_value_of_command += get_binary_value_of_command_name(cur_command_sentence->index_of_command); /* Get the binary value of the command name*/
+	/* Set the A value of the command to 1 (Absolute). No need to check for anything, the first Mila will always have the R bit on! */
+	binary_value_of_command += 1 << INDEX_OF_THE_A_BYTE;
+
 
 	if (cur_command_sentence->first_argument != NULL) {
 		deal_with_first_parameter(cur_command_sentence,&binary_value_of_command,&binary_value_for_first_argument,&L);
@@ -93,6 +96,8 @@ void handle_command(char* command) {
 
 		}
 	} 
+
+
 
 
 	IC += L;
@@ -205,10 +210,14 @@ void deal_with_first_parameter(command_sentence* cur_command_sentence,mila* cur_
 
 /* TODO: complete the impleminatation*/
 void deal_with_direct_type_value(mila* cur_binary_value_of_command,mila* additional_mila,char* direct_type_argument) {
-	int value_of_direct_argument = atoi(direct_type_argument); /* Convert the direct argument to an integer */
-	int binary_value_of_direct_argument = binary_value_of_direct_argument = int_to_binary(value_of_direct_argument); /* Convert the integer to binary */
+	int value_of_direct_argument = atoi(direct_type_argument); /* Convert the direct argument to a decimal int */
 
+	/* Take the decimal value of the direct argument and bit shift it to the left so it doesn't collide with the A.R.E bits!*/
+	int binary_value_of_direct_argument = int_to_binary(value_of_direct_argument) << INDEX_OF_THE_BIT_AFTER_A; 
+	binary_value_of_direct_argument += 1 << INDEX_OF_THE_A_BYTE; /* Set the A value of the direct argument to 1 (Absolute) */
 
+	/* Add the binary value of the direct argument to the binary value of the command */
+	
 	
 }
 

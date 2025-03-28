@@ -9,8 +9,6 @@
  * @param key_nodes - A struct that holds pointers to the head, current, and last nodes of the list of known macros.
  * @return FILE* - The pointer to the start of the after-macro file.
  */
-/* TODO: make it so you can't declare macros that have a name of a asm name, nor the name 'mcro'.
-	macros also must start with a letter, or '_' only!*/
 FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,key_macro_nodes* key_nodes) {
 	FILE* cur_asm_file_line_ptr = start_of_assembly_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	FILE* am_file = create_after_macro_file(input_file_name); /* Create the after-macro file. we will write unto it each line we go from from the og asm file. */
@@ -30,7 +28,17 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,
 		} else if (strcmp(state,"INSIDE_MACRO_DECLARATION") == 0) {
 			state = inside_macro_declaration_state(line,am_file,state,key_nodes);
 		}
+
+
+		 /* Check for an error state. We'll go to next file */
+		 if (strcmp(state, "ERROR") == 0) {
+            fclose(am_file); /* Close the file*/
+            remove(am_file); /* Delete the file*/
+            return NULL; 
+        }
 	}
+
+
 
 	fseek(am_file, 0, SEEK_SET); /* Go back to the start of the file so we can read from the start of the file.*/
 	return am_file;
@@ -63,13 +71,18 @@ char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_n
 		printf(" macro name: %s\n",ptr_to_remaining_of_macro_line);
 
 		/* Create a new macro node into the list and give its macro field a macro name that is the name that is in 'line'.*/
-		add_a_macro_node_to_list(ptr_to_remaining_of_macro_line,key_nodes);
+		if (add_a_macro_node_to_list(ptr_to_remaining_of_macro_line,key_nodes)) {
+			/* If the macro node was added successfully, we can now change the state to inside a macro declaration. */
+			state = "INSIDE_MACRO_DECLARATION"; 
+		} else {
+			fprintf(stderr, "The program got an invalid assembly instruction.");
+			state = "ERROR"; /* Change state to error since we can't have a macro name like this*/
+		}
 
-		state = "INSIDE_MACRO_DECLARATION"; /* Change state since we've noticed we're inside a macro declaration*/
-
-		return state; /* Continue so you don't print the 'mcro'*/
+		return state;
 	}
 
+	free_macro_storage(key_nodes); 
 	fprintf(am_file, "%s", line); /* If you got here, the line that got registered is a regular line, so just print it.*/
 	return state;
 }
@@ -102,6 +115,7 @@ char* inside_macro_declaration_state(char* line,FILE* am_file,char* state,key_ma
 	if (last_node->val.macro_content == NULL) {
 		fprintf(stderr, "the program did not manage to get enough storage to store a macro in the list of macro symbols.");
 		free_macro_storage(key_nodes);
+		exit(1);
 	}
 	strcat(last_node->val.macro_content, line);
 
@@ -131,12 +145,21 @@ bool check_line_for_macro(char* chosen_line,key_macro_nodes* key_nodes) {
 	return false;
 }
 
-void add_a_macro_node_to_list(char* found_macro_name,key_macro_nodes* key_nodes) {
+bool add_a_macro_node_to_list(char* found_macro_name,key_macro_nodes* key_nodes) {
 	/* Create and initialize the new macro node. its macro name will be the name we found in 'line', and we make sure its next field is null. */
 	macro_node* new_macro_node = malloc(sizeof(macro_node));
+
+	/* Check if the macro name is even valid. If it isn't we will have to output an error and jump to the next file since the current file is not valid*/
+	if (!is_valid_macro_name(found_macro_name)) {
+		free_macro_storage(key_nodes);
+		return false;
+	}
+
+	/* Check if we have space for the information or not. */
 	if (new_macro_node == NULL) {
 		fprintf(stderr, "the program did not manage to get enough storage to store a macro in the list of macro symbols.");
 		free_macro_storage(key_nodes);
+		exit(1);
 	}
 	
 	/* Allocate storage to where the macro name will be stored, and if can be done, copy the ~value~ of found_macro_name unto the feild. */
@@ -144,6 +167,7 @@ void add_a_macro_node_to_list(char* found_macro_name,key_macro_nodes* key_nodes)
 	if (new_macro_node->val.macro_name == NULL) {
 		fprintf(stderr, "the program did not manage to get enough storage to store a macro in the list of macro symbols.");
 		free_macro_storage(key_nodes);
+		exit(1);
 	}
 
 	strcpy(new_macro_node->val.macro_name, found_macro_name);
@@ -162,10 +186,48 @@ void add_a_macro_node_to_list(char* found_macro_name,key_macro_nodes* key_nodes)
 
 	/* Update the last node pointer */
 	key_nodes->last_macro_node = new_macro_node;
+
+
+	/* If we got here, it means the the process was succesful. so we'll return 'true'*/
+	return true;
+}
+
+bool is_valid_macro_name(char* macro_name) {
+	char* list_of_invalid_macro_names[] = {
+		NULL,"mcro", "mcroend",
+		 "mov", "cmp", "add", "sub", "lea", "clr", "not", "inc", "dec",
+		 "jmp", "bne", "jsr", "red", "prn", "rts", "stop",
+		 ".data", ".string", ".entry", ".extern"
+	};
+
+	/* Check if the macro name is one of the invalid names */
+	for (int i = 0; i < sizeof(list_of_invalid_macro_names) / sizeof(list_of_invalid_macro_names[0]); i++) {
+		if (strcmp(macro_name, list_of_invalid_macro_names[i]) == 0) {
+			fprintf(stderr, "A macro name is can't be a kept keyword\n");
+			return false;
+		}
+	}
+
+	/* Check if the macro name starts with a letter or an underscore */
+	if (!isalpha(macro_name[0]) && macro_name[0] != '_') {
+		fprintf(stderr, "A macro name must start with a letter or an underscore.\n");
+		return false;
+	}
+
+	/* Check if the macro name contains only letters, numbers, and underscores */
+	for (int i = 1; i < strlen(macro_name); i++) {
+		if (!isalnum(macro_name[i]) && macro_name[i] != '_') {
+			fprintf(stderr, "A macro name can only contain letters, numbers, and underscores.\n");
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /**
- * This func Frees all the storage that was allocated for the macro nodes. Used typically for crashes.
+ * This func Frees all the storage that was allocated for the macro nodes. Used typically when we done with the macro stage, however will also be
+ * used in situations where memory allocation failed.
  */
 void free_macro_storage(key_macro_nodes* key_nodes) {
     macro_node *current = key_nodes->head_of_macro_storage;
@@ -183,6 +245,4 @@ void free_macro_storage(key_macro_nodes* key_nodes) {
     key_nodes->head_of_macro_storage = NULL;
     key_nodes->cur_macro_node = NULL;
     key_nodes->last_macro_node = NULL;
-
-	exit(1);
 }
