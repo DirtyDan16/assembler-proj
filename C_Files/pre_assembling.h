@@ -7,7 +7,7 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer, char* input_file_name
 char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_nodes* key_nodes);
 char* inside_macro_declaration_state(char* line,FILE* am_file,char* state,key_macro_nodes* key_nodes);
 
-bool check_line_for_macro(char* chosen_line, key_macro_nodes* key_nodes);
+bool check_if_line_is_a_defined_macro(char* chosen_line, key_macro_nodes* key_nodes);
 bool is_valid_macro_name(char* macro_name);
 
 

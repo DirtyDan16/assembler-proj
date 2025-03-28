@@ -42,5 +42,16 @@ FILE* create_after_macro_file(char* assembly_file_name) {
 	return am_file;
 }
 
+void remove_am_file(char* am_file_name) {
+	char *am_file_path = malloc(strlen(DIRECTORY_TO_INPUT_FILES)+strlen(am_file_name)+strlen(".am"));
+	
+	/* Name the output object file to the name of the assembly file we read from, and add the '.am' suffix*/
+	strcpy(am_file_path,DIRECTORY_TO_OUTPUT_FILES);
+	strcat(am_file_path,am_file_name);
+	strcat(am_file_path,".am");
+
+	remove(am_file_path); /* Remove the after-macro file (the file which has the asm code after translating macros.) */
+}
+
 
 

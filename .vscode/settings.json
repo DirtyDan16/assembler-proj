@@ -64,7 +64,8 @@
     "general.h": "c",
     "assembler.h": "c",
     "initial_scan.h": "c",
-    "ctype.h": "c"
+    "ctype.h": "c",
+    "outputing.h": "c"
   },
   "C_Cpp.errorSquiggles": "disabled"
 }

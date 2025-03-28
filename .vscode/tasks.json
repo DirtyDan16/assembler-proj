@@ -17,7 +17,7 @@
                 "C_Files/second_scan.c",
                 "C_Files/utils.c",
                 "-o",
-                "Output_Files/assembler"
+                "assembler"
             ],
             "group": {
                 "kind": "build",

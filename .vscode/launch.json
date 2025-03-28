@@ -1,13 +1,14 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "configurations": [
     {
       "name": "Debug Assembler",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/Output_Files/assembler",
+      "program": "${workspaceFolder}/assembler",
       "args": [
-        "input1.as"
+        "input1.as",
+        "input2.as"
       ],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",

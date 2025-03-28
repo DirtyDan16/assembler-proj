@@ -87,3 +87,19 @@ int int_to_binary(int value) {
     }
 
     return binary_value;
+}
+
+char* look_for_first_non_whitespace_char(char* line) {
+    char* first_non_whitespace_char = NULL;
+
+    /* Find the first non-whitespace character */
+    while (*line != '\0') {
+        if (!isspace(*line)) {
+            first_non_whitespace_char = line;
+            break;
+        }
+        line++; /* Move to the next character */
+    }
+
+    return first_non_whitespace_char;
+}

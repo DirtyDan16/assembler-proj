@@ -39,14 +39,15 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,
 	}
 
 
-
+	free_macro_storage(key_nodes); /* Free the macro storage since we are done with it. */
 	fseek(am_file, 0, SEEK_SET); /* Go back to the start of the file so we can read from the start of the file.*/
 	return am_file;
 }
 
 
 char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_nodes* key_nodes) {
-	char* ptr_to_remaining_of_macro_line=NULL; /* When we find a mcro declaration, this will hold the macro name that is in the same line as the declaration*/
+	char* ptr_to_remaining_of_macro_line=NULL; /* If we find a mcro declaration, this will hold the macro name that is in the same line as the declaration*/
+	char* line_without_indentation = look_for_first_non_whitespace_char(line); /* This will hold the line without indentation. Will be used to get the raw value of the line so we can compare correctly with certain keywords. */
 
 	/* If the line is empty, just print it and continue to the next line.*/
 	if (is_empty(line)) {
@@ -55,7 +56,7 @@ char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_n
 	}
 
 	/* If we found a macro, then take the contents of the macro and write them unto the am_file*/
-	if (check_line_for_macro(line,key_nodes)) {
+	if (check_if_line_is_a_defined_macro(line_without_indentation,key_nodes)) {
 		/* cur_macro_node is the node that we found has a macro_name that is the same as this line. so we take the contents of the macro and paste them unto the am_file*/
 		fprintf(am_file, "%s", key_nodes->cur_macro_node->val.macro_content);
 
@@ -63,10 +64,10 @@ char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_n
 	} 
 	/* Check if the line is a macro declaring line
 	we use strtok() to devide an inspected line with a space in it, since macro declaring lines come in the format: "mcro <name>", so we want to check the first word only*/
-	if (strcmp(strtok_copy(line," "),"mcro") == 0) {
+	if (strchr(line_without_indentation, ' ') != NULL && strcmp(strtok_copy(line_without_indentation, " "), "mcro") == 0) {
 		printf("New macro being declared!\n");
 
-		ptr_to_remaining_of_macro_line = (strchr(line,' ')+1); /* Point at the remaining part of the line (the actual name of the macro)*/
+		ptr_to_remaining_of_macro_line = (strchr(line_without_indentation,' ')+1); /* Point at the remaining part of the line (the actual name of the macro)*/
 
 		printf(" macro name: %s\n",ptr_to_remaining_of_macro_line);
 
@@ -82,7 +83,6 @@ char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_n
 		return state;
 	}
 
-	free_macro_storage(key_nodes); 
 	fprintf(am_file, "%s", line); /* If you got here, the line that got registered is a regular line, so just print it.*/
 	return state;
 }
@@ -91,13 +91,15 @@ char* inside_macro_declaration_state(char* line,FILE* am_file,char* state,key_ma
 	/* Get the last macro node in the list of known macros. */
 	macro_node* last_node = key_nodes->last_macro_node;
 
+	char* line_without_indentation = look_for_first_non_whitespace_char(line); /* This will hold the line without indentation. Will be used to get the raw value of the line so we can compare correctly with certain keywords. */
+
 	/* If the line is empty, just print it and continue to the next line.*/
 	if (is_empty(line)) {
 		fprintf(am_file, "%s", line);
 		return state;
 	}
 	/* Check if the line is an end of a macro declaration. if yes, change state to outside of macro declaration and continue reading the next line*/
-	if (strcmp(strtok_copy(line,"\n"), "mcroend") == 0) {
+	if (strcmp(strtok_copy(line_without_indentation,"\n"), "mcroend") == 0) {
 		state = "OUTSIDE";
 		return state;
 	}
@@ -122,7 +124,7 @@ char* inside_macro_declaration_state(char* line,FILE* am_file,char* state,key_ma
 	return state;
 }
 
-bool check_line_for_macro(char* chosen_line,key_macro_nodes* key_nodes) {
+bool check_if_line_is_a_defined_macro(char* chosen_line,key_macro_nodes* key_nodes) {
 	key_nodes->cur_macro_node = key_nodes->head_of_macro_storage; /* Initialize the current macro node to the head of the list of known macros. */
 	
 	/* If the chosen_line does not end with a newline character, add one. (so comarision is with two strings with a \n) */
