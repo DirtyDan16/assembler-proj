@@ -33,7 +33,7 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,
 		 /* Check for an error state. We'll go to next file */
 		 if (strcmp(state, "ERROR") == 0) {
             fclose(am_file); /* Close the file*/
-            remove(am_file); /* Delete the file*/
+            remove_am_file(input_file_name); /* Delete the file*/
             return NULL; 
         }
 	}
@@ -194,14 +194,22 @@ bool add_a_macro_node_to_list(char* found_macro_name,key_macro_nodes* key_nodes)
 
 bool is_valid_macro_name(char* macro_name) {
 	char* list_of_invalid_macro_names[] = {
-		NULL,"mcro", "mcroend",
+		 "mcro", "mcroend",
 		 "mov", "cmp", "add", "sub", "lea", "clr", "not", "inc", "dec",
 		 "jmp", "bne", "jsr", "red", "prn", "rts", "stop",
 		 ".data", ".string", ".entry", ".extern"
 	};
 
+	
+	int i;
+
+	if (macro_name == NULL) {
+		fprintf(stderr, "A macro name can't be null\n");
+		return false;
+	}
+
 	/* Check if the macro name is one of the invalid names */
-	for (int i = 0; i < sizeof(list_of_invalid_macro_names) / sizeof(list_of_invalid_macro_names[0]); i++) {
+	for (i = 0; i < sizeof(list_of_invalid_macro_names) / sizeof(list_of_invalid_macro_names[0]); i++) {
 		if (strcmp(macro_name, list_of_invalid_macro_names[i]) == 0) {
 			fprintf(stderr, "A macro name is can't be a kept keyword\n");
 			return false;
@@ -214,13 +222,18 @@ bool is_valid_macro_name(char* macro_name) {
 		return false;
 	}
 
-	/* Check if the macro name contains only letters, numbers, and underscores */
-	for (int i = 1; i < strlen(macro_name); i++) {
+	/* Check if the macro name contains only letters, numbers, and underscores. we check one less char than the length of the string since we check if the very last character is a \n or not.*/
+	for (i = 1; i < strlen(macro_name) - 1; i++) {
 		if (!isalnum(macro_name[i]) && macro_name[i] != '_') {
 			fprintf(stderr, "A macro name can only contain letters, numbers, and underscores.\n");
 			return false;
 		}
 	}
+	if (macro_name[strlen(macro_name) - 1] != '\n') {
+		fprintf(stderr, "A macro name must end with a newline character.\n");
+		return false;
+	}
+
 
 	return true;
 }
