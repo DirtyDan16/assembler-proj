@@ -1,9 +1,9 @@
 #include "initial_scan.h"
 
-mila IC = 100; /* The Instruction Counter. */
-mila DC = 0; /* The Data Counter. */
+int IC = 100; /* The Instruction Counter. */
+int DC = 0; /* The Data Counter. */
 
-
+/* TODO: ignore indention in indented lines*/
 void initial_scan(FILE* start_of_am_file_pointer,key_data_structures* key_nodes) {
 	FILE* input_file_pointer = start_of_am_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	char line[GEN_LENGTH_OF_STRINGS]= {0}; /* This line stores each time a line from the asm file. (fgets() puts the info in it) */
@@ -70,11 +70,15 @@ bool is_valid_command(char* chosen_line) {
 }
 
 void handle_command(char* command) {
-	mila binary_value_of_command = 0,binary_value_for_first_argument=0,binary_value_for_second_argument=0;
-	mila L = 1; /* The amount of Milas this command will take in the instruction table. Can go up to 3 */
+	int L = 1; /* The amount of Milas this command will take in the instruction table. Can go up to 3 */
 
-	 /* This struct will be handy and convieneient since it gathers all usefull info of this sentence in a singular place! */
-	 command_sentence* cur_command_sentence = make_command_sentence_struct(command);
+	/* This struct will be handy and convieneient since it gathers all usefull info of this sentence in a singular place! */
+	command_sentence* cur_command_sentence = make_command_sentence_struct(command);
+
+	mila binary_value_of_command,binary_value_for_first_argument,binary_value_for_second_argument;
+	binary_value_of_command.v = 0; binary_value_for_first_argument.v = 0; binary_value_for_second_argument.v = 0; /* Initialize the binary values to 0 */
+
+
 	
 
 	if (!check_if_num_of_arguments_are_valid(cur_command_sentence)) {
@@ -83,9 +87,9 @@ void handle_command(char* command) {
 	}
 
 
-	binary_value_of_command += get_binary_value_of_command_name(cur_command_sentence->index_of_command); /* Get the binary value of the command name*/
+	binary_value_of_command.v += get_binary_value_of_command_name(cur_command_sentence->index_of_command); /* Get the binary value of the command name*/
 	/* Set the A value of the command to 1 (Absolute). No need to check for anything, the first Mila will always have the R bit on! */
-	binary_value_of_command += 1 << INDEX_OF_THE_A_BYTE;
+	binary_value_of_command.v += 1 << INDEX_OF_THE_A_BYTE;
 
 
 	if (cur_command_sentence->first_argument != NULL) {
@@ -96,9 +100,6 @@ void handle_command(char* command) {
 
 		}
 	} 
-
-
-
 
 	IC += L;
 }
@@ -174,10 +175,36 @@ bool check_if_num_of_arguments_are_valid(command_sentence* cur_command_sentence)
 
 }
 
-void deal_with_second_parameter(command_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_second_argument,mila* L) {
+void deal_with_second_parameter(command_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_second_argument,int* L) {
+	int type_of_second_argument = determine_type_of_asm_argument(cur_command_sentence->second_argument); /* Determine the type of the second argument*/
+	/* If the second argument is not valid, output an error and return*/
+	if (type_of_second_argument == NOT_VALID) {
+		fprintf(stderr, "The program got an invalid assembly instruction.");
+		return;
+	}
+	if (!is_argument_valid_for_this_specific_command(cur_command_sentence,type_of_second_argument,2)) {
+		fprintf(stderr, "The program got an invalid assembly instruction. The second argument is not valid for this command.");
+		return;
+	}
+
+	
+	/* Logic that deals with the type of argument here ~~*/
+
+	/* If the second argument is a register, get the register number and add it to the binary value of the command*/
+	if (type_of_second_argument == REGISTER) {
+		 deal_with_register_type_value(cur_binary_value_of_command,cur_command_sentence,2);
+	/* All other types of arguments require to add an extra Mila, so we'll increment the L value.*/
+	} else {
+		*L += 1;
+		/* At this point of time, in the first scan, we only know how to deal with direct values. So lets check this type only*/
+		if (type_of_second_argument == DIRECT) {
+			deal_with_direct_type_value(binary_value_for_second_argument,cur_command_sentence->second_argument);
+		}
+
+	}
 }	
 
-void deal_with_first_parameter(command_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_first_argument,mila* L) {
+void deal_with_first_parameter(command_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_first_argument,int* L) {
 	int type_of_first_argument = determine_type_of_asm_argument(cur_command_sentence->first_argument); /* Determine the type of the first argument*/
 	/* If the first argument is not valid, output an error and return*/
 	if (type_of_first_argument == NOT_VALID) {
@@ -200,7 +227,7 @@ void deal_with_first_parameter(command_sentence* cur_command_sentence,mila* cur_
 		*L += 1;
 		/* At this point of time, in the first scan, we only know how to deal with direct values. So lets check this type only*/
 		if (type_of_first_argument == DIRECT) {
-			deal_with_direct_type_value(cur_binary_value_of_command,binary_value_for_first_argument,cur_command_sentence->first_argument);
+			deal_with_direct_type_value(binary_value_for_first_argument,cur_command_sentence->first_argument);
 		}
 
 	}
@@ -208,17 +235,21 @@ void deal_with_first_parameter(command_sentence* cur_command_sentence,mila* cur_
 		
 }
 
-/* TODO: complete the impleminatation*/
-void deal_with_direct_type_value(mila* cur_binary_value_of_command,mila* additional_mila,char* direct_type_argument) {
-	int value_of_direct_argument = atoi(direct_type_argument); /* Convert the direct argument to a decimal int */
+void deal_with_direct_type_value(mila* additional_mila,char* argument) {
+	char* argument_without_hash = strtok(argument,"#"); /* Get the argument without the '#' char*/
+	int value_of_direct_argument = atoi(argument_without_hash); /* Convert the direct argument to a decimal int */
 
 	/* Take the decimal value of the direct argument and bit shift it to the left so it doesn't collide with the A.R.E bits!*/
-	int binary_value_of_direct_argument = int_to_binary(value_of_direct_argument) << INDEX_OF_THE_BIT_AFTER_A; 
-	binary_value_of_direct_argument += 1 << INDEX_OF_THE_A_BYTE; /* Set the A value of the direct argument to 1 (Absolute) */
+	mila binary_value_of_direct_argument;
+	binary_value_of_direct_argument.v = value_of_direct_argument << INDEX_OF_THE_BIT_AFTER_A; 
+	binary_value_of_direct_argument.v += 1 << INDEX_OF_THE_A_BYTE; /* Set the A value of the direct argument to 1 (Absolute) */
 
-	/* Add the binary value of the direct argument to the binary value of the command */
-	
-	
+	/* Add the binary value of the direct argument to the binary value of the additional mila */
+	(*additional_mila).v = binary_value_of_direct_argument.v;
+
+	/* Since we are dealing with a direct value, we need to set the addressing mode to direct to the Mila,
+	HOWEVER the value of the addressing mode is convinently 0, which is the default value of the mila.
+	So we don't need to do anything here. */
 }
 
 void deal_with_register_type_value(mila* cur_binary_value_of_command,command_sentence* cur_command_sentence,int argument_number) {
@@ -231,7 +262,7 @@ void deal_with_register_type_value(mila* cur_binary_value_of_command,command_sen
 	char* register_name = argument_number == 1 ? cur_command_sentence->first_argument : cur_command_sentence->second_argument;
 
 	/* Check which register the argument is and return the register number*/
-	for (i = 0; i < sizeof(registers); i++) {
+	for (i = 0; i < sizeof(registers) / sizeof(registers[0]); i++) {
 		if (strcmp(register_name,registers[i]) == 0) {
 			register_number = i;
 			break;
@@ -242,17 +273,18 @@ void deal_with_register_type_value(mila* cur_binary_value_of_command,command_sen
 	add that value unto the binary value of the first mila.*/
 	if (cur_command_sentence->num_of_arguments == 2) {
 		if (argument_number == 1) { /* Source*/
-			cur_binary_value_of_command += register_number << INDEX_OF_SOURCE_REGISTER_BYTE;
-			cur_binary_value_of_command += REGISTER << INDEX_OF_SOURCE_ADDRESING_MODE_BYTE;
-		}
+			(*cur_binary_value_of_command).v += register_number << INDEX_OF_SOURCE_REGISTER_BYTE;
+			(*cur_binary_value_of_command).v += REGISTER << INDEX_OF_SOURCE_ADDRESING_MODE_BYTE;
 		} else if (argument_number == 2) /* Target*/ {
-			cur_binary_value_of_command += register_number << INDEX_OF_TARGET_REGISTER_BYTE;
-			cur_binary_value_of_command += REGISTER << INDEX_OF_TARGET_ADDRESING_MODE_BYTE;
+			(*cur_binary_value_of_command).v += register_number << INDEX_OF_TARGET_REGISTER_BYTE;
+			(*cur_binary_value_of_command).v += REGISTER << INDEX_OF_TARGET_ADDRESING_MODE_BYTE;
 		}
-	else if (cur_command_sentence->num_of_arguments == 1) { /* If there is only 1 argument, it has to be the target*/
-		cur_binary_value_of_command += register_number << INDEX_OF_TARGET_REGISTER_BYTE;
-		cur_binary_value_of_command += REGISTER << INDEX_OF_TARGET_ADDRESING_MODE_BYTE;
-	} else return;
+	} else if (cur_command_sentence->num_of_arguments == 1) { /* If there is only 1 argument, it has to be the target*/
+		(*cur_binary_value_of_command).v += register_number << INDEX_OF_TARGET_REGISTER_BYTE;
+		(*cur_binary_value_of_command).v += REGISTER << INDEX_OF_TARGET_ADDRESING_MODE_BYTE;
+	} else {
+		return; /* If there are no arguments, do nothing */
+	}
 	
 }
 
@@ -332,7 +364,7 @@ int get_binary_value_of_command_name(int index_of_command) {
 	/* Get the opcode and funct values of the command and add them to the machine code representation of the command.
 	Do it via bit shifting to the desired index*/
 	machine_code_rep_of_command += asmCommands[index_of_command].opcode << INDEX_OF_OPCODE_BYTE;
-	machine_code_rep_of_command += asmCommands[index_of_command].opcode << INDEX_OF_FUNCT_BYTE;	
+	machine_code_rep_of_command += asmCommands[index_of_command].funct << INDEX_OF_FUNCT_BYTE;	
 	
 	return machine_code_rep_of_command;
 }
@@ -379,7 +411,6 @@ void handle_entry_directive(char* entry) {
 
 
 void handle_string_directive(char* string,mila* data_table) {
-	int char_in_str_value_as_int;
 	 
 	if (string == NULL) {
 		fprintf(stderr, "String directive is missing a value.\n");
@@ -387,18 +418,17 @@ void handle_string_directive(char* string,mila* data_table) {
 	}
 
 	/* As long as there are more characters to read from, read the next character*/
-	while (string != NULL) {
-		char_in_str_value_as_int = (int)(*string); /* Convert the character to an integer */
-		data_table[DC] = char_in_str_value_as_int; /* Add the character to the data table */
+	while (string != NULL) { 
+		data_table[DC].v = int_to_binary( (int)(*string) );/* Convert the character to an integer and Add the binary representation of the character to the data table */
 		DC++; /* Increment the Data Counter */
 		string++; /* Get the next character */
 	}
 
 }
 
+
 void handle_data_directive(char* data,mila* data_table) {
 	char* data_value = strtok(data, ",");
-	int data_value_as_int;
 	 
 	if (data_value == NULL) {
 		fprintf(stderr, "Data directive is missing a value.\n");
@@ -407,8 +437,7 @@ void handle_data_directive(char* data,mila* data_table) {
 
 	/* As long as there are more data values to read from, read the next data value*/
 	while (data_value != NULL) {
-		data_value_as_int = atoi(data_value); /* Convert the data value which is an ascii char to an integer */
-		data_table[DC] = data_value_as_int; /* Add the data value to the data table */
+		data_table[DC].v = int_to_binary( atoi(data_value) );/* Convert the data value which is an ascii char to an integer and Add the binary representation of the data value to the data table */
 		DC++; /* Increment the Data Counter */
 		data_value = strtok(NULL, ","); /* Get the next data value */
 	}
@@ -493,6 +522,38 @@ void add_label_to_table(char* label_name, char type,key_label_nodes* key_nodes) 
 	}
 
 }
+
+int int_to_binary(int value) {
+    /* Take the unsigned value of value and mask to 24 bits.
+    This is done to ensure that the value is not negative and does not exceed 24 bits */
+    unsigned int unsigned_value = (unsigned int)value & 0xFFFFFF;
+
+    int binary_value = 0;
+    int base = 1;
+    int remainder;
+
+    if (value == 0) {
+        return 0;
+    }
+
+    /* Convert the integer to binary */
+    while (unsigned_value > 0) {
+        remainder = unsigned_value % 2;
+        binary_value += remainder * base;
+        unsigned_value /= 2;
+        base *= 10;
+    }
+
+    /* Shift the binary value to the left by the specified number of bits.
+    * This is done to ensure that the binary value does not collide with the A.R.E bits.
+    * The A.R.E bits are 3 bits, so we need to shift the binary value by 3 bits.
+    * The number of bits to shift is determined by the number of bits in the binary value.
+    */
+    binary_value <<= INDEX_OF_THE_BIT_AFTER_A; /* Shift the binary value to the left by 3 bits */
+
+    return binary_value;
+}
+
 
 /* checks if this Sentence is empty or not and return a boolean val accordingly*/
 bool is_empty(char* line) {

@@ -67,28 +67,6 @@ char* strtok_copy(char* passed_in_str , char* token) {
     return copy_str;
 }
 
-
-int int_to_binary(int value) {
-    if (value == 0) {
-        return 0;
-    }
-
-    uint unsigned_value = (uint)value;
-    int binary_value = 0;
-    int base = 1;
-    int remainder;
-
-    /* Convert the integer to binary */
-    while (unsigned_value > 0) {
-        remainder = unsigned_value % 2;
-        binary_value += remainder * base;
-        unsigned_value /= 2;
-        base *= 10;
-    }
-
-    return binary_value;
-}
-
 char* look_for_first_non_whitespace_char(char* line) {
     char* first_non_whitespace_char = NULL;
 
