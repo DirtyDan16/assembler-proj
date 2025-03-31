@@ -3,6 +3,15 @@
 int IC = 100; /* The Instruction Counter. */
 int DC = 0; /* The Data Counter. */
 
+static int current_line_number = 1; /* Tracks the current line number for error reporting */
+/* Why this is ok as a global variable? 
+This is acceptable because the 'current_line_number' is a shared resource that needs to be accessed and updated across multiple functions 
+during the processing of the file. Making it global avoids the need to pass it as a parameter to every function, simplifying the code. 
+Additionally, its scope is limited to this file, ensuring it doesn't interfere with other parts of the program. 
+
+Also, its value is only changed at a single function.
+*/
+
 /* TODO: ignore indention in indented lines*/
 void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) {
 	FILE* input_file_pointer = start_of_am_file_pointer; /* Have a tracker of which line we are corrently reading from. */
@@ -12,6 +21,7 @@ void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) {
 	/* As long as there are more lines to read from, read the next line*/
 	while (fgets(line, GEN_LENGTH_OF_STRINGS, input_file_pointer) != NULL) {
 		go_over_read_line(line,key_resources);
+		current_line_number++; /* Increment the line number */
 	}
 }
 
@@ -29,7 +39,7 @@ static void go_over_read_line(char* chosen_line,key_resources* key_resources) {
 		chosen_line = strchr(chosen_line, ' '); /* Skip to after the label*/
 
 		if (chosen_line == NULL) {
-			fprintf(stderr, "There's a Label without a command or directive.\n");
+			fprintf(stderr, "There's a Label without a command or directive. \n LINE: %d\n", current_line_number);
 			return;
 		}
 	}
@@ -44,7 +54,6 @@ static void go_over_read_line(char* chosen_line,key_resources* key_resources) {
 	} else {
 
 	}
-
 }
 
 
@@ -53,7 +62,7 @@ bool is_valid_command(char* chosen_line) {
 	int i;
 
 	if (inspected_word == NULL) {
-		fprintf(stderr, "The program got an invalid assembly instruction.");
+		fprintf(stderr, "The program got an invalid assembly instruction. \n LINE: %d\n", current_line_number);
 		return false; 
 	}
 
@@ -65,7 +74,7 @@ bool is_valid_command(char* chosen_line) {
 		}
 	}
 	/* returning 0 if the command is invalid */
-	fprintf(stderr, "The program got an invalid assembly instruction.");
+	fprintf(stderr, "The program got an invalid assembly instruction.\n LINE: %d\n", current_line_number);
 	return false; 
 }
 
@@ -80,7 +89,7 @@ void handle_command(char* command,key_resources* key_resources) {
 
 
 	if (!check_if_num_of_arguments_are_valid(cur_command_sentence)) {
-		fprintf(stderr, "The program got an invalid assembly instruction.");
+		fprintf(stderr, "The program got an invalid assembly instruction. \n LINE: %d\n", current_line_number);
 		return;
 	}
 
@@ -190,11 +199,11 @@ void deal_with_second_parameter(instruction_sentence* cur_command_sentence,mila*
 	int type_of_second_argument = determine_type_of_asm_argument(cur_command_sentence->second_argument); /* Determine the type of the second argument*/
 	/* If the second argument is not valid, output an error and return*/
 	if (type_of_second_argument == NOT_VALID) {
-		fprintf(stderr, "The program got an invalid assembly instruction.");
+		fprintf(stderr, "The program got an invalid assembly instruction. \n LINE: %d\n", current_line_number);
 		return;
 	}
 	if (!is_argument_valid_for_this_specific_command(cur_command_sentence,type_of_second_argument,2)) {
-		fprintf(stderr, "The program got an invalid assembly instruction. The second argument is not valid for this command.");
+		fprintf(stderr, "The program got an invalid assembly instruction. The second argument is not valid for this command. \n LINE: %d\n", current_line_number);
 		return;
 	}
 
@@ -219,11 +228,11 @@ void deal_with_first_parameter(instruction_sentence* cur_command_sentence,mila* 
 	int type_of_first_argument = determine_type_of_asm_argument(cur_command_sentence->first_argument); /* Determine the type of the first argument*/
 	/* If the first argument is not valid, output an error and return*/
 	if (type_of_first_argument == NOT_VALID) {
-		fprintf(stderr, "The program got an invalid assembly instruction.");
+		fprintf(stderr, "The program got an invalid assembly instruction. \n LINE: %d\n", current_line_number);
 		return;
 	}
 	if (!is_argument_valid_for_this_specific_command(cur_command_sentence,type_of_first_argument,1)) {
-		fprintf(stderr, "The program got an invalid assembly instruction. The first argument is not valid for this command.");
+		fprintf(stderr, "The program got an invalid assembly instruction. The first argument is not valid for this command. \n LINE: %d\n", current_line_number);
 		return;
 	}
 
@@ -368,7 +377,7 @@ int get_binary_value_of_command_name(int index_of_command) {
 	int machine_code_rep_of_command = 0;
 
 	if (index_of_command == -1) {
-		fprintf(stderr, "The program got an invalid assembly instruction.");
+		fprintf(stderr, "The program got an invalid assembly instruction. \n LINE: %d\n", current_line_number);
 		return -1;
 	}
 
@@ -386,7 +395,7 @@ void handle_directive(char* line,key_resources* key_resources) {
 	char* directive_value = strtok(NULL, "\n"); /* Get the directive value. Recall that we need to look for a new line char SPECIFICALLY since values can be seperated by spaces*/
 
 	if (directive_name == NULL || directive_value == NULL) {
-		fprintf(stderr, "A directive is missing a name or a value.\n");
+		fprintf(stderr, "A directive is missing a name or a value.\n \n LINE: %d\n", current_line_number);
 		return;
 	}
 
@@ -400,7 +409,7 @@ void handle_directive(char* line,key_resources* key_resources) {
 	} else if (strcmp(directive_name, ".extern") == 0) {
 		handle_extern_directive(directive_value,key_resources->label_nodes);
 	} else {
-		fprintf(stderr, "Unknown directive.\n");
+		fprintf(stderr, "Unknown directive. \n LINE: %d\n", current_line_number);
 	}
 	
 }
@@ -417,7 +426,7 @@ void handle_entry_directive(char* entry) {
 void handle_string_directive(char* string,mila* data_table) {
 	 
 	if (string == NULL) {
-		fprintf(stderr, "String directive is missing a value.\n");
+		fprintf(stderr, "String directive is missing a value. \n LINE: %d\n", current_line_number);
 		return;
 	}
 
@@ -436,7 +445,7 @@ void handle_data_directive(char* data,mila* data_table) {
 	char* data_value = strtok(data, ",");
 	 
 	if (data_value == NULL) {
-		fprintf(stderr, "Data directive is missing a value.\n");
+		fprintf(stderr, "Data directive is missing a value.\n LINE: %d\n", current_line_number);
 		return;
 	}
 
@@ -446,6 +455,10 @@ void handle_data_directive(char* data,mila* data_table) {
 		data_table[DC].v = int_to_binary( atoi(data_value) ) << INDEX_OF_THE_BIT_AFTER_A; /* Shift the binary value to the left by 3 bits */
 		DC++; /* Increment the Data Counter */
 		data_value = strtok(NULL, ","); /* Get the next data value */
+
+		if (is_empty(data_value)) {
+			fprintf(stderr, "Data directive is missing a value after a comma.\n LINE: %d\n", current_line_number);
+		}
 	}
 }
 

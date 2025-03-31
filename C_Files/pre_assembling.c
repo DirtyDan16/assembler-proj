@@ -1,14 +1,15 @@
 #include "pre_assembling.h"
 
-/**
- * This function is the first step of the assembly process. It goes over the assembly file and looks for macros. If it finds a macro, it will store it in a list of known macros.
- * If it finds a macro name in the assembly file, it will replace it with the contents of the macro.
- * 
- * @param start_of_assembly_file_pointer - The pointer to the start of the assembly file.
- * @param input_file_name - The name of the assembly file.
- * @param key_nodes - A struct that holds pointers to the head, current, and last nodes of the list of known macros.
- * @return FILE* - The pointer to the start of the after-macro file.
- */
+
+static int current_line_number = 1; /* Tracks the current line number for error reporting */
+/* Why this is ok as a global variable? 
+This is acceptable because the 'current_line_number' is a shared resource that needs to be accessed and updated across multiple functions 
+during the processing of the file. Making it global avoids the need to pass it as a parameter to every function, simplifying the code. 
+Additionally, its scope is limited to this file, ensuring it doesn't interfere with other parts of the program. 
+
+Also, its value is only changed at a single function.
+*/
+
 FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,key_macro_nodes* key_nodes) {
 	FILE* cur_asm_file_line_ptr = start_of_assembly_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	FILE* am_file = create_after_macro_file(input_file_name); /* Create the after-macro file. we will write unto it each line we go from from the og asm file. */
@@ -76,7 +77,7 @@ char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_n
 			/* If the macro node was added successfully, we can now change the state to inside a macro declaration. */
 			state = "INSIDE_MACRO_DECLARATION"; 
 		} else {
-			fprintf(stderr, "The program got an invalid assembly instruction.");
+			fprintf(stderr, "The program got an invalid assembly instruction. \n LINE: %d\n", current_line_number);
 			state = "ERROR"; /* Change state to error since we can't have a macro name like this*/
 		}
 
@@ -206,33 +207,33 @@ bool is_valid_macro_name(char* macro_name) {
 	int i;
 
 	if (macro_name == NULL) {
-		fprintf(stderr, "A macro name can't be null\n");
+		fprintf(stderr, "A macro name can't be null \n LINE: %d\n", current_line_number);
 		return false;
 	}
 
 	/* Check if the macro name is one of the invalid names */
 	for (i = 0; i < sizeof(list_of_invalid_macro_names) / sizeof(list_of_invalid_macro_names[0]); i++) {
 		if (strcmp(macro_name, list_of_invalid_macro_names[i]) == 0) {
-			fprintf(stderr, "A macro name is can't be a kept keyword\n");
+			fprintf(stderr, "A macro name can't be a kept keyword \n LINE: %d\n", current_line_number);
 			return false;
 		}
 	}
 
 	/* Check if the macro name starts with a letter or an underscore */
 	if (!isalpha(macro_name[0]) && macro_name[0] != '_') {
-		fprintf(stderr, "A macro name must start with a letter or an underscore.\n");
+		fprintf(stderr, "A macro name must start with a letter or an underscore.\n LINE: %d\n", current_line_number);
 		return false;
 	}
 
 	/* Check if the macro name contains only letters, numbers, and underscores. we check one less char than the length of the string since we check if the very last character is a \n or not.*/
 	for (i = 1; i < strlen(macro_name) - 1; i++) {
 		if (!isalnum(macro_name[i]) && macro_name[i] != '_') {
-			fprintf(stderr, "A macro name can only contain letters, numbers, and underscores.\n");
+			fprintf(stderr, "A macro name can only contain letters, numbers, and underscores. \n LINE: %d\n", current_line_number);
 			return false;
 		}
 	}
 	if (macro_name[strlen(macro_name) - 1] != '\n') {
-		fprintf(stderr, "A macro name must end with a newline character.\n");
+		fprintf(stderr, "A macro name must end with a newline character. \n LINE: %d\n", current_line_number);
 		return false;
 	}
 
