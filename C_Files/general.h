@@ -32,4 +32,5 @@ extern char* strtok_copy(char* passed_in_str, char* token);
 
 extern char* look_for_first_non_whitespace_char(char* line);
 
+extern int int_to_binary(int value);
 #endif

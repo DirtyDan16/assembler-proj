@@ -4,18 +4,18 @@ int IC = 100; /* The Instruction Counter. */
 int DC = 0; /* The Data Counter. */
 
 /* TODO: ignore indention in indented lines*/
-void initial_scan(FILE* start_of_am_file_pointer,key_data_structures* key_nodes) {
+void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) {
 	FILE* input_file_pointer = start_of_am_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	char line[GEN_LENGTH_OF_STRINGS]= {0}; /* This line stores each time a line from the asm file. (fgets() puts the info in it) */
 
 	printf("\n\tGoing through first scan of the file!.\n");
 	/* As long as there are more lines to read from, read the next line*/
 	while (fgets(line, GEN_LENGTH_OF_STRINGS, input_file_pointer) != NULL) {
-		go_over_read_line(line,key_nodes);
+		go_over_read_line(line,key_resources);
 	}
 }
 
-static void go_over_read_line(char* chosen_line,key_data_structures* key_nodes) {
+static void go_over_read_line(char* chosen_line,key_resources* key_resources) {
 	bool has_label = false;
 	
 	char* label_name = NULL; /* If we have found a label, we'll store it in here*/
@@ -36,11 +36,11 @@ static void go_over_read_line(char* chosen_line,key_data_structures* key_nodes) 
 
 	/* Determine which type this sentence is.*/
 	if (is_directive(chosen_line)) {
-		if (has_label) add_label_to_table(label_name, 'd',key_nodes->label_nodes); /* Add the label name to the table with the 'd' type that stands for data*/
-		handle_directive(chosen_line,key_nodes);		/* Handle the directive */
+		if (has_label) add_label_to_table(label_name,DC,".data",key_resources->label_nodes); /* Add the label name to the table*/
+		handle_directive(chosen_line,key_resources);		/* Handle the directive */
 	} else if (is_valid_command(chosen_line)) {
-		if (has_label) add_label_to_table(label_name, 'c',key_nodes->label_nodes); /* Add the label name to the table with the 'c' type that stands for command*/
-		handle_command(chosen_line);		/* Handle the command */
+		if (has_label) add_label_to_table(label_name,IC,".code",key_resources->label_nodes); /* Add the label name to the table*/
+		handle_command(chosen_line,key_resources);		/* Handle the command */
 	} else {
 
 	}
@@ -69,17 +69,15 @@ bool is_valid_command(char* chosen_line) {
 	return false; 
 }
 
-void handle_command(char* command) {
+void handle_command(char* command,key_resources* key_resources) {
 	int L = 1; /* The amount of Milas this command will take in the instruction table. Can go up to 3 */
 
 	/* This struct will be handy and convieneient since it gathers all usefull info of this sentence in a singular place! */
-	command_sentence* cur_command_sentence = make_command_sentence_struct(command);
+	instruction_sentence* cur_command_sentence = make_command_sentence_struct(command);
 
 	mila binary_value_of_command,binary_value_for_first_argument,binary_value_for_second_argument;
 	binary_value_of_command.v = 0; binary_value_for_first_argument.v = 0; binary_value_for_second_argument.v = 0; /* Initialize the binary values to 0 */
 
-
-	
 
 	if (!check_if_num_of_arguments_are_valid(cur_command_sentence)) {
 		fprintf(stderr, "The program got an invalid assembly instruction.");
@@ -92,19 +90,32 @@ void handle_command(char* command) {
 	binary_value_of_command.v += 1 << INDEX_OF_THE_A_BYTE;
 
 
+	/* If there are arguments added alongside the instruction, deal with the Machine Code they give appropriately.*/
 	if (cur_command_sentence->first_argument != NULL) {
 		deal_with_first_parameter(cur_command_sentence,&binary_value_of_command,&binary_value_for_first_argument,&L);
 
 		if (cur_command_sentence->second_argument != NULL) {
 			deal_with_second_parameter(cur_command_sentence,&binary_value_of_command,&binary_value_for_second_argument,&L);
-
 		}
 	} 
 
+	add_instruction_to_table(&key_resources->instruction_table[key_resources->index_of_instruction_table],binary_value_of_command,binary_value_for_first_argument,binary_value_for_second_argument,IC,L); /* Add the instruction to the instruction table */
+	key_resources->index_of_instruction_table++; /* Increment the index of the instruction table */
+	
+	/* Update the IC by the Length of the instruction Machine Code.*/
 	IC += L;
 }
 
-command_sentence* make_command_sentence_struct(char* command_line) {
+void add_instruction_to_table(instruction* instruction,mila binary_value_of_command,mila binary_value_for_first_argument,mila binary_value_for_second_argument,int IC,int L) {
+	/* Add the command to the instruction table */
+	instruction->code_of_command = binary_value_of_command;
+	instruction->code_of_first_argument = binary_value_for_first_argument;
+	instruction->code_of_second_argument = binary_value_for_second_argument;
+	instruction->IC = IC;
+	instruction->L = L;
+}
+
+instruction_sentence* make_command_sentence_struct(char* command_line) {
 		/* Gather all feilds required to make a strcut for a Command Sentence. */
 		char* command_name = strtok(command_line," ");
 		char* first_argument = NULL;
@@ -113,7 +124,7 @@ command_sentence* make_command_sentence_struct(char* command_line) {
 		int num_of_arguments = 0;
 		int index_of_command = get_index_of_command(command_name); /* Get the index of the command in the array of commands*/
 	
-		command_sentence* cur_command_sentence = (command_sentence*)malloc(sizeof(command_sentence));
+		instruction_sentence* cur_command_sentence = (instruction_sentence*)malloc(sizeof(instruction_sentence));
 		if (cur_command_sentence == NULL) {
 			fprintf(stderr, "Memory allocation failed.\n");
 			exit(1);
@@ -145,7 +156,7 @@ command_sentence* make_command_sentence_struct(char* command_line) {
 		return cur_command_sentence;
 }
 
-bool check_if_num_of_arguments_are_valid(command_sentence* cur_command_sentence) {
+bool check_if_num_of_arguments_are_valid(instruction_sentence* cur_command_sentence) {
 	int index_of_command = cur_command_sentence->index_of_command;
 	char* first_argument = cur_command_sentence->first_argument;
 	char* second_argument = cur_command_sentence->second_argument;
@@ -175,7 +186,7 @@ bool check_if_num_of_arguments_are_valid(command_sentence* cur_command_sentence)
 
 }
 
-void deal_with_second_parameter(command_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_second_argument,int* L) {
+void deal_with_second_parameter(instruction_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_second_argument,int* L) {
 	int type_of_second_argument = determine_type_of_asm_argument(cur_command_sentence->second_argument); /* Determine the type of the second argument*/
 	/* If the second argument is not valid, output an error and return*/
 	if (type_of_second_argument == NOT_VALID) {
@@ -204,7 +215,7 @@ void deal_with_second_parameter(command_sentence* cur_command_sentence,mila* cur
 	}
 }	
 
-void deal_with_first_parameter(command_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_first_argument,int* L) {
+void deal_with_first_parameter(instruction_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_first_argument,int* L) {
 	int type_of_first_argument = determine_type_of_asm_argument(cur_command_sentence->first_argument); /* Determine the type of the first argument*/
 	/* If the first argument is not valid, output an error and return*/
 	if (type_of_first_argument == NOT_VALID) {
@@ -252,7 +263,7 @@ void deal_with_direct_type_value(mila* additional_mila,char* argument) {
 	So we don't need to do anything here. */
 }
 
-void deal_with_register_type_value(mila* cur_binary_value_of_command,command_sentence* cur_command_sentence,int argument_number) {
+void deal_with_register_type_value(mila* cur_binary_value_of_command,instruction_sentence* cur_command_sentence,int argument_number) {
 	int i;
 
 	/* The number of the register in the registers array*/
@@ -301,7 +312,7 @@ int get_index_of_command(char* command_name) {
 	return -1;
 }
 
-bool is_argument_valid_for_this_specific_command(command_sentence* cur_command_sentence,int argument_type,int argument_number) {
+bool is_argument_valid_for_this_specific_command(instruction_sentence* cur_command_sentence,int argument_type,int argument_number) {
 	int num_of_arguments = cur_command_sentence->num_of_arguments; /* Get the number of arguments the command has*/
 
 	/* Check if the argument type is valid for this specific command.
@@ -370,7 +381,7 @@ int get_binary_value_of_command_name(int index_of_command) {
 }
 
 
-void handle_directive(char* line,key_data_structures* key_nodes) {
+void handle_directive(char* line,key_resources* key_resources) {
 	char* directive_name = strtok(line, " "); /* Get the directive name */
 	char* directive_value = strtok(NULL, "\n"); /* Get the directive value. Recall that we need to look for a new line char SPECIFICALLY since values can be seperated by spaces*/
 
@@ -381,32 +392,25 @@ void handle_directive(char* line,key_data_structures* key_nodes) {
 
 	/* Check which directive it is and handle it accordingly */
 	if (strcmp(directive_name, ".data") == 0) {
-		handle_data_directive(directive_value,key_nodes->data_table);		
+		handle_data_directive(directive_value,key_resources->data_table);		
 	} else if (strcmp(directive_name, ".string") == 0) {
-		handle_string_directive(directive_value,key_nodes->data_table);		
+		handle_string_directive(directive_value,key_resources->data_table);		
 	} else if (strcmp(directive_name, ".entry") == 0) {
 		handle_entry_directive(directive_value);
 	} else if (strcmp(directive_name, ".extern") == 0) {
-		handle_extern_directive(directive_value);
+		handle_extern_directive(directive_value,key_resources->label_nodes);
 	} else {
 		fprintf(stderr, "Unknown directive.\n");
 	}
 	
 }
 
-void handle_extern_directive(char* extern_name) {
+void handle_extern_directive(char* extern_name,key_label_nodes* key_resources) {
+	add_label_to_table(extern_name,0,".external",key_resources); /* Add the label name to the table*/
 }
 
 void handle_entry_directive(char* entry) {
-	char* entry_name = strtok_copy(entry, " ");
-
-	if (entry_name == NULL) {
-		fprintf(stderr, "Entry directive is missing a value.\n");
-		return;
-	}
-
-	/* Add the entry name to the table of entries */
-	/*add_entry_to_table(entry_name);*/
+	/* This is a placeholder for now. We will handle the entry directive in the second scan */
 }
 
 
@@ -419,7 +423,8 @@ void handle_string_directive(char* string,mila* data_table) {
 
 	/* As long as there are more characters to read from, read the next character*/
 	while (string != NULL) { 
-		data_table[DC].v = int_to_binary( (int)(*string) );/* Convert the character to an integer and Add the binary representation of the character to the data table */
+		/* Convert the character to an integer and Add the binary representation of the character to the data table */
+		data_table[DC].v = int_to_binary( (int)(*string) ) << INDEX_OF_THE_BIT_AFTER_A; /* Shift the binary value to the left by 3 bits */
 		DC++; /* Increment the Data Counter */
 		string++; /* Get the next character */
 	}
@@ -437,7 +442,8 @@ void handle_data_directive(char* data,mila* data_table) {
 
 	/* As long as there are more data values to read from, read the next data value*/
 	while (data_value != NULL) {
-		data_table[DC].v = int_to_binary( atoi(data_value) );/* Convert the data value which is an ascii char to an integer and Add the binary representation of the data value to the data table */
+		/* Convert the data value which is an ascii char to an integer and Add the binary representation of the data value to the data table */
+		data_table[DC].v = int_to_binary( atoi(data_value) ) << INDEX_OF_THE_BIT_AFTER_A; /* Shift the binary value to the left by 3 bits */
 		DC++; /* Increment the Data Counter */
 		data_value = strtok(NULL, ","); /* Get the next data value */
 	}
@@ -483,7 +489,7 @@ bool is_directive(char* line) {
 	return false;
 }
 
-void add_label_to_table(char* label_name, char type,key_label_nodes* key_nodes) {
+void add_label_to_table(char* label_name,int label_address, char* type,key_label_nodes* key_resources) {
 	label new_label;
 	label_node* new_label_node;
 
@@ -497,7 +503,7 @@ void add_label_to_table(char* label_name, char type,key_label_nodes* key_nodes) 
 
 	/* Give the label its name, address, and type */
 	new_label.label_name = label_name;
-	new_label.label_address = IC;
+	new_label.label_address = label_address;
 	new_label.label_type = type;
 
 	/* Allocate memory for the new label node */
@@ -512,48 +518,16 @@ void add_label_to_table(char* label_name, char type,key_label_nodes* key_nodes) 
 	new_label_node->next = NULL;
 
 	/* If the table is empty, make the new label node the head and tail of the table */
-	if (key_nodes->head_of_label_storage == NULL) {
-		key_nodes->head_of_label_storage = new_label_node;
-		key_nodes->head_of_label_storage = new_label_node;
+	if (key_resources->head_of_label_storage == NULL) {
+		key_resources->head_of_label_storage = new_label_node;
+		key_resources->head_of_label_storage = new_label_node;
 	} else {
 		/* If the table is not empty, add the new label node to the end of the table */
-		key_nodes->last_label_node->next = new_label_node;
-		key_nodes->last_label_node = new_label_node;
+		key_resources->last_label_node->next = new_label_node;
+		key_resources->last_label_node = new_label_node;
 	}
 
 }
-
-int int_to_binary(int value) {
-    /* Take the unsigned value of value and mask to 24 bits.
-    This is done to ensure that the value is not negative and does not exceed 24 bits */
-    unsigned int unsigned_value = (unsigned int)value & 0xFFFFFF;
-
-    int binary_value = 0;
-    int base = 1;
-    int remainder;
-
-    if (value == 0) {
-        return 0;
-    }
-
-    /* Convert the integer to binary */
-    while (unsigned_value > 0) {
-        remainder = unsigned_value % 2;
-        binary_value += remainder * base;
-        unsigned_value /= 2;
-        base *= 10;
-    }
-
-    /* Shift the binary value to the left by the specified number of bits.
-    * This is done to ensure that the binary value does not collide with the A.R.E bits.
-    * The A.R.E bits are 3 bits, so we need to shift the binary value by 3 bits.
-    * The number of bits to shift is determined by the number of bits in the binary value.
-    */
-    binary_value <<= INDEX_OF_THE_BIT_AFTER_A; /* Shift the binary value to the left by 3 bits */
-
-    return binary_value;
-}
-
 
 /* checks if this Sentence is empty or not and return a boolean val accordingly*/
 bool is_empty(char* line) {

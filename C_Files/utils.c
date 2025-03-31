@@ -81,3 +81,26 @@ char* look_for_first_non_whitespace_char(char* line) {
 
     return first_non_whitespace_char;
 }
+
+int int_to_binary(int value) {
+    /* Take the unsigned value of value and mask to 24 bits.
+    This is done to ensure that the value is not negative and does not exceed 24 bits */
+    unsigned int unsigned_value = (unsigned int)value & 0xFFFFFF;
+
+    int binary_value = 0;
+    int base = 1;
+    int remainder;
+
+    if (value == 0) {
+        return 0;
+    }
+
+    /* Convert the integer to binary */
+    while (unsigned_value > 0) {
+        remainder = unsigned_value % 2;
+        binary_value += remainder * base;
+        unsigned_value /= 2;
+        base *= 10;
+    }
+    return binary_value;
+}

@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 	int i;/*for index loop*/
 	
 	/* Initialize the data structures that will hold pointers to valuable nodes in the data structures / arrays for a given ASM file. */
-	key_data_structures* key_nodes = init_data_structures();
+	key_resources* key_nodes = init_data_structures();
 
 	/* Let's start with checking if the input files are valid, and output error otherwise. */
 
@@ -56,8 +56,8 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-key_data_structures* init_data_structures() {
-	key_data_structures* key_nodes = (key_data_structures*)malloc(sizeof(key_data_structures));
+key_resources* init_data_structures() {
+	key_resources* key_nodes = (key_resources*)malloc(sizeof(key_resources));
 
 	key_nodes->macro_nodes = (key_macro_nodes*)malloc(sizeof(key_macro_nodes));
 	key_nodes->label_nodes = (key_label_nodes*)malloc(sizeof(key_label_nodes));
@@ -76,13 +76,15 @@ key_data_structures* init_data_structures() {
 	key_nodes->label_nodes->last_label_node = NULL;
 
 	memset(&key_nodes->instruction_table, 0, sizeof(key_nodes->instruction_table));
+	key_nodes->index_of_instruction_table = 0; /* The index of the first free space of the instruction table. starts at 0, and grows by 1 each time an instruction is added. */
+
     memset(&key_nodes->data_table, 0, sizeof(key_nodes->data_table));
 
 
 	return key_nodes;
 }
 
-void free_data_structures(key_data_structures* key_nodes) {
+void free_data_structures(key_resources* key_nodes) {
 	/* Free the macro nodes */
 	free_macro_storage(key_nodes->macro_nodes);
 	free(key_nodes->macro_nodes);
