@@ -3,7 +3,7 @@
 .extern W
 
 mcro APPLE
-add #2,#1
+add    #2   ,   SUS
 cmp #5,#-1
 mcroend
 

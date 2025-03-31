@@ -33,8 +33,9 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,
 
 		 /* Check for an error state. We'll go to next file */
 		 if (strcmp(state, "ERROR") == 0) {
-            fclose(am_file); /* Close the file*/
+            fclose(am_file); 
             remove_am_file(input_file_name); /* Delete the file*/
+			current_line_number = 1; /* Reset the line number */
             return NULL; 
         }
 	}
@@ -42,6 +43,7 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,
 
 	free_macro_storage(key_nodes); /* Free the macro storage since we are done with it. */
 	fseek(am_file, 0, SEEK_SET); /* Go back to the start of the file so we can read from the start of the file.*/
+	current_line_number = 1; /* Reset the line number */
 	return am_file;
 }
 

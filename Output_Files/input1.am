@@ -3,7 +3,7 @@
 .extern W
 
 
-add #2,#1
+add    #2   ,   SUS
 cmp #5,#-1
 
 MAIN: add r3, LIST
@@ -21,7 +21,7 @@ LOOP: prn #48
  add L3, L3
 END: stop
 
-add #2,#1
+add    #2   ,   SUS
 cmp #5,#-1
 
 STR: .string “abcd”

@@ -2,14 +2,14 @@
 #define compiling_logic
 
 /* Define the struct representing an ASM command*/
-typedef struct AsmCommand{
+typedef struct instruction_machine_code_rep{
     const char *name;  /* Assembly command name*/
     int opcode;        /* Opcode number*/
     int funct;         /* Funct number*/
-} AsmCommand;
+} instruction_machine_code_rep;
 
 /* List of valid ASM commands*/
-static const AsmCommand asmCommands[] = {
+static const instruction_machine_code_rep instructions_machine_code_rep[] = {
     {"mov",  0,  0}, 
     {"cmp",  1,  0}, 
     {"add",  2,  1}, 

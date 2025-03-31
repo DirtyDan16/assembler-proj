@@ -12,7 +12,6 @@ Additionally, its scope is limited to this file, ensuring it doesn't interfere w
 Also, its value is only changed at a single function.
 */
 
-/* TODO: ignore indention in indented lines*/
 void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) {
 	FILE* input_file_pointer = start_of_am_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	char line[GEN_LENGTH_OF_STRINGS]= {0}; /* This line stores each time a line from the asm file. (fgets() puts the info in it) */
@@ -23,42 +22,47 @@ void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) {
 		go_over_read_line(line,key_resources);
 		current_line_number++; /* Increment the line number */
 	}
+
+	current_line_number = 1; /* Reset the line number */
 }
 
 static void go_over_read_line(char* chosen_line,key_resources* key_resources) {
 	bool has_label = false;
 	
 	char* label_name = NULL; /* If we have found a label, we'll store it in here*/
+	char* line_without_indentation = look_for_first_non_whitespace_char(chosen_line); /* This will hold the line without indentation. Will be used to get the raw value of the line so we can compare correctly with certain keywords. */
+
 
 	/* If the line is empty or a comment, skip it*/
-	if (is_empty(chosen_line) || is_comment(chosen_line)) return;
+	if (is_empty(chosen_line) || is_comment(line_without_indentation)) return;
 
 	/* Check if the line has a label attached to it. if it has, already get the name from it in the if condition*/
-	if ((label_name = is_valid_label(chosen_line)) != NULL) {
+	if ((label_name = is_valid_label(line_without_indentation)) != NULL) {
 		has_label = true;
-		chosen_line = strchr(chosen_line, ' '); /* Skip to after the label*/
+		line_without_indentation = strchr(line_without_indentation, ' '); /* Skip to after the label*/
+		line_without_indentation = look_for_first_non_whitespace_char(line_without_indentation); /* Get the line without the whitespace that is given between the label and the rest of sentence. */
 
-		if (chosen_line == NULL) {
+		if (line_without_indentation == NULL) {
 			fprintf(stderr, "There's a Label without a command or directive. \n LINE: %d\n", current_line_number);
 			return;
 		}
 	}
 
 	/* Determine which type this sentence is.*/
-	if (is_directive(chosen_line)) {
+	if (is_directive(line_without_indentation)) {
 		if (has_label) add_label_to_table(label_name,DC,".data",key_resources->label_nodes); /* Add the label name to the table*/
-		handle_directive(chosen_line,key_resources);		/* Handle the directive */
-	} else if (is_valid_command(chosen_line)) {
+		handle_directive(line_without_indentation,key_resources);		/* Handle the directive */
+	} else if (is_valid_command(line_without_indentation)) {
 		if (has_label) add_label_to_table(label_name,IC,".code",key_resources->label_nodes); /* Add the label name to the table*/
-		handle_command(chosen_line,key_resources);		/* Handle the command */
+		handle_command(line_without_indentation,key_resources);		/* Handle the command */
 	} else {
 
 	}
 }
 
 
-bool is_valid_command(char* chosen_line) {
-	char* inspected_word = strtok_copy(chosen_line," ");
+bool is_valid_command(char* line_without_indentation) {
+	char* inspected_word = strtok_copy(line_without_indentation," ");
 	int i;
 
 	if (inspected_word == NULL) {
@@ -69,7 +73,7 @@ bool is_valid_command(char* chosen_line) {
 	for (i = 0; i < NUM_OF_ASM_COMMANDS; i++) {
 		/* Check if the read command name is an actual command name that's part of our imaginary assembly lang.
 		 */
-		if (strcmp(asmCommands[i].name,chosen_line) == 0) {
+		if (strcmp(instructions_machine_code_rep[i].name,inspected_word) == 0) {
 			return true;
 		}
 	}
@@ -125,15 +129,22 @@ void add_instruction_to_table(instruction* instruction,mila binary_value_of_comm
 }
 
 instruction_sentence* make_command_sentence_struct(char* command_line) {
+		instruction_sentence* cur_command_sentence = NULL; /* This will be the struct that holds all the info of the command sentence. */
+
 		/* Gather all feilds required to make a strcut for a Command Sentence. */
-		char* command_name = strtok(command_line," ");
-		char* first_argument = NULL;
-		char* second_argument = NULL;
+		char* command_name = NULL, * first_argument = NULL, * second_argument = NULL;
+		int num_of_arguments = 0, index_of_command = 0;
+
+		char* command_line_copy = strdup(command_line); /* Make a copy of the command line so we can modify it without affecting the original string */
+		if (command_line_copy == NULL) {
+			fprintf(stderr, "Memory allocation failed.\n");
+			exit(1);
+		}
+		command_name = strtok(command_line_copy," ");
 	
-		int num_of_arguments = 0;
-		int index_of_command = get_index_of_command(command_name); /* Get the index of the command in the array of commands*/
+		index_of_command = get_index_of_command(command_name); /* Get the index of the command in the array of commands*/
 	
-		instruction_sentence* cur_command_sentence = (instruction_sentence*)malloc(sizeof(instruction_sentence));
+		cur_command_sentence = (instruction_sentence*)malloc(sizeof(instruction_sentence));
 		if (cur_command_sentence == NULL) {
 			fprintf(stderr, "Memory allocation failed.\n");
 			exit(1);
@@ -143,7 +154,13 @@ instruction_sentence* make_command_sentence_struct(char* command_line) {
 		/* If there is 2 arguments*/
 		if (strchr(command_line,',')) { 
 			first_argument = strtok(NULL,",");
+			/* Get rid of whitespaces surrounding the argument*/
+			first_argument = trim_whitespace(first_argument);
+
 			second_argument = strtok(NULL,"\n");
+			/* Get rid of whitespaces surrounding the argument*/
+			second_argument = trim_whitespace(second_argument);
+
 	
 			num_of_arguments = 2;
 		/* If there is 1 or less arguments. If there is no value to give (0 arguments), it'll just give back null to the var (or a value that won't be registered as a type of 
@@ -314,7 +331,7 @@ int get_index_of_command(char* command_name) {
 	/* Check if the read command name is an actual command name that's part of our imaginary assembly lang.
 	*/
 	for (i = 0; i < NUM_OF_ASM_COMMANDS; i++) {
-		if (strcmp(asmCommands[i].name,command_name) == 0) {
+		if (strcmp(instructions_machine_code_rep[i].name,command_name) == 0) {
 			return i;
 		}
 	}
@@ -329,13 +346,14 @@ bool is_argument_valid_for_this_specific_command(instruction_sentence* cur_comma
 	*/
 
 	/* If the command has 2 arguments, check if the argument type is valid. First arg has to be for source, and Second for target.*/
+	/* The argument type is stored as a number, so we need to convert it to a char. we'll add '0' which will get us to the wanted ascii val*/
 	if (num_of_arguments == 2) {
 		if (argument_number == 1) {
-			if (strchr(addressing_modes_for_commands[cur_command_sentence->index_of_command].source_addressing_modes,(char)argument_type) != NULL) {
+			if (strchr(addressing_modes_for_commands[cur_command_sentence->index_of_command].source_addressing_modes,argument_type+'0') != NULL) {
 				return true;
 			}
 		} else if (argument_number == 2) {
-			if (strchr(addressing_modes_for_commands[cur_command_sentence->index_of_command].target_addressing_modes,(char)argument_type) != NULL) {
+			if (strchr(addressing_modes_for_commands[cur_command_sentence->index_of_command].target_addressing_modes,argument_type+'0') != NULL) {
 				return true;
 			}
 		}
@@ -362,7 +380,7 @@ int determine_type_of_asm_argument(char* argument) {
 	if (argument[0] == '&' && (strchr(argument+1,'&') == NULL)) return RELATIVE;
 
 	/* Check if the argument is a register*/
-	for (i = 0; i < sizeof(registers) ; i++) {
+	for (i = 0; i < sizeof(registers)/sizeof(registers[0]) ; i++) {
 		if (strcmp(argument,registers[i]) == 0) return REGISTER;
 	}
 
@@ -383,8 +401,8 @@ int get_binary_value_of_command_name(int index_of_command) {
 
 	/* Get the opcode and funct values of the command and add them to the machine code representation of the command.
 	Do it via bit shifting to the desired index*/
-	machine_code_rep_of_command += asmCommands[index_of_command].opcode << INDEX_OF_OPCODE_BYTE;
-	machine_code_rep_of_command += asmCommands[index_of_command].funct << INDEX_OF_FUNCT_BYTE;	
+	machine_code_rep_of_command += instructions_machine_code_rep[index_of_command].opcode << INDEX_OF_OPCODE_BYTE;
+	machine_code_rep_of_command += instructions_machine_code_rep[index_of_command].funct << INDEX_OF_FUNCT_BYTE;	
 	
 	return machine_code_rep_of_command;
 }
@@ -422,7 +440,7 @@ void handle_entry_directive(char* entry) {
 	/* This is a placeholder for now. We will handle the entry directive in the second scan */
 }
 
-
+/* TODO: complete implemintation*/
 void handle_string_directive(char* string,mila* data_table) {
 	 
 	if (string == NULL) {
@@ -466,6 +484,7 @@ void handle_data_directive(char* data,mila* data_table) {
  * This function checks if the line has a label attached to it.
  * If it does, it returns the label name. If it doesn't, it returns NULL.
  */
+/* TODO: check if the label NAME is valid or not.*/
 char* is_valid_label(char* line) {
 	char* label_name = NULL;
 
@@ -534,6 +553,7 @@ void add_label_to_table(char* label_name,int label_address, char* type,key_label
 	if (key_resources->head_of_label_storage == NULL) {
 		key_resources->head_of_label_storage = new_label_node;
 		key_resources->head_of_label_storage = new_label_node;
+		key_resources->last_label_node = new_label_node;
 	} else {
 		/* If the table is not empty, add the new label node to the end of the table */
 		key_resources->last_label_node->next = new_label_node;
