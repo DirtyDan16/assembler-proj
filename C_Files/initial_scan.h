@@ -9,7 +9,8 @@ static void go_over_read_line(char* chosen_line,key_resources* key_resources);
 
 void handle_directive(char* line,key_resources* key_resources);
 void handle_data_directive(char* data,mila* data_table);
-void handle_string_directive(char* string,mila* data_table);
+void handle_string_directive(char* string,mila data_table[]);
+char* get_string_directive_value(char* value);
 void handle_entry_directive(char* entry);
 void handle_extern_directive(char *extern_name, key_label_nodes *key_resources);
 

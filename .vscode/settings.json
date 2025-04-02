@@ -65,7 +65,8 @@
     "assembler.h": "c",
     "initial_scan.h": "c",
     "ctype.h": "c",
-    "outputing.h": "c"
+    "outputing.h": "c",
+    "type_traits": "c"
   },
   "C_Cpp.errorSquiggles": "disabled"
 }

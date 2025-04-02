@@ -40,8 +40,8 @@ const int list_of_funct_numbers[] = {1,2,3,4};
 enum addressing_mode {
     IMMEDIATE=0,
     DIRECT=1,
-    REGISTER=3,
     RELATIVE=2,
+    REGISTER=3,
     NOT_VALID=-1
 };
 
@@ -60,29 +60,33 @@ enum read_line_type {
     EMPTY
 };
 
-typedef struct addressing_modes_for_command{
-    char *source_addressing_modes;   /* The addressing modes that the source operand can have */
-    char *target_addressing_modes;  /* The addressing modes that the target operand can have */
+
+typedef struct {
+    bool source_addressing_modes[4]; /* The source addressing modes for the command. The index is representing the mode, and the boolean val represents if it is available or not. */
+    bool target_addressing_modes[4]; /* The target addressing modes for the command.  Has A boolean value representing if the mode is available or not. */
 } addressing_modes_for_command;
 
-/* The valid addressing modes for each command's arguments */
+/* The different addressing modes that the operands can have for each command. 
+   The first array is the source addressing modes, and the second is the target addressing modes. 
+   The index of the array represents the command number in the list of commands.
+*/
 static const addressing_modes_for_command addressing_modes_for_commands[16] = {
-        {"0,1,3", "1,3"},
-        {"0,1,3", "0,1,3"},
-        {"0,1,3", "1,3"},
-        {"0,1,3", "1,3"},
-        {"1", "1,3"},
-        {NULL, "1,3"},
-        {NULL, "1,3"},
-        {NULL, "1,3"},
-        {NULL, "1,3"},
-        {NULL, "1,2"},
-        {NULL, "1,2"},
-        {NULL, "1,2"},
-        {NULL, "1,3"},
-        {NULL, "0,1,3"},
-        {NULL, NULL},
-        {NULL, NULL}
+    {{T, T, F, T}, {F, T, F, T}}, 
+    {{T, T, F, T}, {T, T, F, T}},  
+    {{T, T, F, T}, {F, T, F, T}},  
+    {{T, T, F, T}, {F, T, F, T}},  
+    {{F, T, F, F}, {F, T, F, T}},  
+    {{F, F, F, F}, {F, T, F, T}},  
+    {{F, F, F, F}, {F, T, F, T}},  
+    {{F, F, F, F}, {F, T, F, T}},  
+    {{F, F, F, F}, {F, T, F, T}},  
+    {{F, F, F, F}, {F, T, T, F}},  
+    {{F, F, F, F}, {F, T, T, F}},  
+    {{F, F, F, F}, {F, T, T, F}},  
+    {{F, F, F, F}, {F, T, F, T}},  
+    {{F, F, F, F}, {T, T, F, T}},  
+    {{F, F, F, F}, {F, F, F, F}},  
+    {{F, F, F, F}, {F, F, F, F}}  
 };
 
 static const int num_of_arguments_each_command_has[16] = {2,2,2,2,2,1,1,1,1,1,1,1,1,1,0,0};

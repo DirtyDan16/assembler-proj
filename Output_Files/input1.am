@@ -24,7 +24,7 @@ END: stop
 add    #2   ,   SUS
 cmp #5,#-1
 
-STR: .string “abcd”
+STR: .string "abcd"
 LIST: .data 6, -9
  .data -100
 K: .data 31

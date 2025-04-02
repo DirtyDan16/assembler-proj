@@ -15,9 +15,11 @@
 /* Basic boolean stuff*/
 typedef int bool;
 #define true 1
+#define T 1
 #define false 0
+#define F 0
 
-typedef struct {
+typedef struct mila {
     int v : 24; /* 24 bits for the value */
 } mila;
 

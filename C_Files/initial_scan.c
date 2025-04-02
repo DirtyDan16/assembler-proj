@@ -70,6 +70,11 @@ bool is_valid_command(char* line_without_indentation) {
 		return false; 
 	}
 
+	/* If the inspected word has a newline attached to it, we would want to get rid of it since it isn't accounted for in the comparison.
+		(specifically can happen for stop/rts commands)	
+	*/
+	replace_char_with_null(inspected_word,'\n');
+
 	for (i = 0; i < NUM_OF_ASM_COMMANDS; i++) {
 		/* Check if the read command name is an actual command name that's part of our imaginary assembly lang.
 		 */
@@ -93,7 +98,7 @@ void handle_command(char* command,key_resources* key_resources) {
 
 
 	if (!check_if_num_of_arguments_are_valid(cur_command_sentence)) {
-		fprintf(stderr, "The program got an invalid assembly instruction. \n LINE: %d\n", current_line_number);
+		fprintf(stderr, "The program got an assembly instruction with wrong amount of arguments. \n LINE: %d\n", current_line_number);
 		return;
 	}
 
@@ -141,6 +146,11 @@ instruction_sentence* make_command_sentence_struct(char* command_line) {
 			exit(1);
 		}
 		command_name = strtok(command_line_copy," ");
+
+		/* If the command name has a newline attached to it, we would want to get rid of it since it isn't accounted for in the comparison.
+		(specifically can happen for stop/rts commands)	
+		*/
+		replace_char_with_null(command_name,'\n');
 	
 		index_of_command = get_index_of_command(command_name); /* Get the index of the command in the array of commands*/
 	
@@ -164,10 +174,10 @@ instruction_sentence* make_command_sentence_struct(char* command_line) {
 	
 			num_of_arguments = 2;
 		/* If there is 1 or less arguments. If there is no value to give (0 arguments), it'll just give back null to the var (or a value that won't be registered as a type of 
-		an argument, ie. white space)*/
+		an argument, ie. white space), and in such scenario, we won't increase the num of arguments var to 1 */
 		} else {
 			first_argument = strtok(NULL,"\n");
-			num_of_arguments = 1;
+			if (first_argument != NULL) num_of_arguments = 1;
 		}
 	
 		/*---------------------------------------------------------------------*/
@@ -340,34 +350,33 @@ int get_index_of_command(char* command_name) {
 
 bool is_argument_valid_for_this_specific_command(instruction_sentence* cur_command_sentence,int argument_type,int argument_number) {
 	int num_of_arguments = cur_command_sentence->num_of_arguments; /* Get the number of arguments the command has*/
+	int index = cur_command_sentence->index_of_command; /* Get the index of the command in the array of commands*/
 
 	/* Check if the argument type is valid for this specific command.
-	 * Note that we cast the argument type to a char since the addressing modes are stored as chars in the struct.
+	  We go to the index of the command in the array of commands, and check if the argument type is valid for this
+	  command via going to the index of a wanted addressing mode and checking if the value is true or false.
 	*/
 
 	/* If the command has 2 arguments, check if the argument type is valid. First arg has to be for source, and Second for target.*/
-	/* The argument type is stored as a number, so we need to convert it to a char. we'll add '0' which will get us to the wanted ascii val*/
 	if (num_of_arguments == 2) {
 		if (argument_number == 1) {
-			if (strchr(addressing_modes_for_commands[cur_command_sentence->index_of_command].source_addressing_modes,argument_type+'0') != NULL) {
+			if (addressing_modes_for_commands[index].source_addressing_modes[argument_type]) {
 				return true;
 			}
 		} else if (argument_number == 2) {
-			if (strchr(addressing_modes_for_commands[cur_command_sentence->index_of_command].target_addressing_modes,argument_type+'0') != NULL) {
+			if (addressing_modes_for_commands[index].target_addressing_modes[argument_type]) {
 				return true;
 			}
 		}
 	/* If the command has 1 argument, check if the argument type is valid. The argument has to be for target.*/
 	} else if (num_of_arguments == 1) {
-		if (strchr(addressing_modes_for_commands[cur_command_sentence->index_of_command].target_addressing_modes,(char)argument_type) != NULL) {
+		if (addressing_modes_for_commands[index].target_addressing_modes[argument_type]) {
 			return true;
 		}
 	/* If the command has 0 arguments, no need to check since there is no arg.*/
-	} else return true;
-		
+	} else if (num_of_arguments == 0) return true;
 
-
-	return false;
+	return false; 
 }
 
 int determine_type_of_asm_argument(char* argument) {
@@ -441,23 +450,55 @@ void handle_entry_directive(char* entry) {
 }
 
 /* TODO: complete implemintation*/
-void handle_string_directive(char* string,mila* data_table) {
-	 
-	if (string == NULL) {
-		fprintf(stderr, "String directive is missing a value. \n LINE: %d\n", current_line_number);
-		return;
-	}
+void handle_string_directive(char* value,mila data_table[]) {
+	char* value_without_quo_marks = get_string_directive_value(value);
+	if (value_without_quo_marks == NULL) return;
 
 	/* As long as there are more characters to read from, read the next character*/
-	while (string != NULL) { 
+	while (*value_without_quo_marks != '\0') {
+		data_table[DC].v = 0;
 		/* Convert the character to an integer and Add the binary representation of the character to the data table */
-		data_table[DC].v = int_to_binary( (int)(*string) ) << INDEX_OF_THE_BIT_AFTER_A; /* Shift the binary value to the left by 3 bits */
+		data_table[DC].v = int_to_binary( (int)(*value_without_quo_marks) ) << INDEX_OF_THE_BIT_AFTER_A; /* Shift the binary value to the left by 3 bits */
 		DC++; /* Increment the Data Counter */
-		string++; /* Get the next character */
+		value_without_quo_marks++; /* Get the next character */
 	}
 
 }
 
+char* get_string_directive_value(char* value) {
+	/* The end of the actual value (including quo marks)*/
+	char* end;
+
+	if (value == NULL) {
+		fprintf(stderr, "String directive is missing a value. \n LINE: %d\n", current_line_number);
+		return NULL;
+	}
+
+	value = trim_whitespace(value);
+	end = value;
+
+	if (*value != '\"') {
+		fprintf(stderr, "String directive's value doesn't correctly open and close with: ' \" '. \n LINE: %d\n", current_line_number);
+		return NULL;
+	} else {
+		*value = '\0';
+		value++;
+	};
+	
+	/* Get to the last char that isn't null.*/
+	while (*(end+1) != '\0') {
+		end++;
+	}
+
+	if (*end != '\"') {
+		fprintf(stderr, "String directive's value doesn't correctly open and close with: ' \" '. \n LINE: %d\n", current_line_number);
+		return NULL;
+	} else {
+		*end = '\0';
+	}
+
+	return (strdup(value));
+}
 
 void handle_data_directive(char* data,mila* data_table) {
 	char* data_value = strtok(data, ",");

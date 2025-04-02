@@ -26,7 +26,7 @@ END: stop
 
 APPLE
 
-STR: .string “abcd”
+STR: .string "abcd"
 LIST: .data 6, -9
  .data -100
 K: .data 31
