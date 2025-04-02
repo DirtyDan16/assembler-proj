@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
 	int i;/*for index loop*/
 	
 	/* Initialize the data structures that will hold pointers to valuable nodes in the data structures / arrays for a given ASM file. */
-	key_resources* key_nodes = init_data_structures();
+	key_resources* key_resources = init_data_structures();
 
 	/* Let's start with checking if the input files are valid, and output error otherwise. */
 
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 	/* Check if the Assembly files are openable, and if yes, let's start compiling them one file at a time */
 	for (i = 1; i < argc; i++) {
 		FILE* am_file = NULL;
-	    key_nodes = init_data_structures();	/* Initialize the data structures that will hold pointers to valuable nodes in the data structures / arrays for a given ASM file. */
+	    key_resources = init_data_structures();	/* Initialize the data structures that will hold pointers to valuable nodes in the data structures / arrays for a given ASM file. */
 
 		input_file_path = concatenate_strings(DIRECTORY_TO_INPUT_FILES, argv[i]);
 		
@@ -40,14 +40,15 @@ int main(int argc, char *argv[]) {
 
 		/* Check if the file can be expanded into its after macro form. If returned null, it means the file has errors in its macros, so we'll skip it 
 		and advance to the next inputted ASM file. We'll also free all of the memory allocated for our data that we want to access in all sorts of places*/
-		if ((am_file = pre_assembling(assembly_file_pointer, assembly_file_name,key_nodes->macro_nodes)) == NULL) {
-			free_data_structures(key_nodes);
+		if ((am_file = pre_assembling(assembly_file_pointer, assembly_file_name,key_resources->macro_nodes)) == NULL) {
+			free_data_structures(key_resources);
 			continue;
 		}
-		initial_scan(am_file,key_nodes);
+		initial_scan(am_file,key_resources);
+		second_scan(am_file,key_resources);
 
 		/* Free the data structures */
-		free_data_structures(key_nodes);
+		free_data_structures(key_resources);
 		fclose(am_file); /* Close the after macro file */
 
 	}
@@ -57,44 +58,44 @@ int main(int argc, char *argv[]) {
 }
 
 key_resources* init_data_structures() {
-	key_resources* key_nodes = (key_resources*)malloc(sizeof(key_resources));
+	key_resources* resources = (key_resources*)malloc(sizeof(key_resources));
 
-	key_nodes->macro_nodes = (key_macro_nodes*)malloc(sizeof(key_macro_nodes));
-	key_nodes->label_nodes = (key_label_nodes*)malloc(sizeof(key_label_nodes));
+	resources->macro_nodes = (key_macro_nodes*)malloc(sizeof(key_macro_nodes));
+	resources->label_nodes = (key_label_nodes*)malloc(sizeof(key_label_nodes));
 	
-	if (key_nodes->macro_nodes == NULL || key_nodes->label_nodes == NULL) {
+	if (resources->macro_nodes == NULL || resources->label_nodes == NULL) {
 		fprintf(stderr, "Memory allocation failed.\n");
 		exit(1);
 	}
 	
-	key_nodes->macro_nodes->head_of_macro_storage = NULL;
-	key_nodes->macro_nodes->cur_macro_node = NULL;
-	key_nodes->macro_nodes->last_macro_node = NULL;
+	resources->macro_nodes->head_of_macro_storage = NULL;
+	resources->macro_nodes->cur_macro_node = NULL;
+	resources->macro_nodes->last_macro_node = NULL;
 	
-	key_nodes->label_nodes->head_of_label_storage = NULL;
-	key_nodes->label_nodes->cur_label_node = NULL;
-	key_nodes->label_nodes->last_label_node = NULL;
+	resources->label_nodes->head_of_label_storage = NULL;
+	resources->label_nodes->cur_label_node = NULL;
+	resources->label_nodes->last_label_node = NULL;
 
-	memset(&key_nodes->instruction_table, 0, sizeof(key_nodes->instruction_table));
-	key_nodes->index_of_instruction_table = 0; /* The index of the first free space of the instruction table. starts at 0, and grows by 1 each time an instruction is added. */
+	memset(&resources->instruction_table, 0, sizeof(resources->instruction_table));
+	resources->index_of_instruction_table = 0; /* The index of the first free space of the instruction table. starts at 0, and grows by 1 each time an instruction is added. */
 
-    memset(&key_nodes->data_table, 0, sizeof(key_nodes->data_table));
+    memset(&resources->data_table, 0, sizeof(resources->data_table));
 
 
-	return key_nodes;
+	return resources;
 }
 
-void free_data_structures(key_resources* key_nodes) {
+void free_data_structures(key_resources* resources) {
 	/* Free the macro nodes */
-	free_macro_storage(key_nodes->macro_nodes);
-	free(key_nodes->macro_nodes);
+	free_macro_storage(resources->macro_nodes);
+	free(resources->macro_nodes);
 	/* Free the label nodes */
-	free(key_nodes->label_nodes->head_of_label_storage);
-	free(key_nodes->label_nodes->cur_label_node);
-	free(key_nodes->label_nodes->last_label_node);
-	free(key_nodes->label_nodes);
+	free(resources->label_nodes->head_of_label_storage);
+	free(resources->label_nodes->cur_label_node);
+	free(resources->label_nodes->last_label_node);
+	free(resources->label_nodes);
 
 
 
-	free(key_nodes); /* Free the key nodes struct itself */
+	free(resources); /* Free the key nodes struct itself */
 }

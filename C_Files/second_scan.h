@@ -1,12 +1,12 @@
 #include "general.h"
 #include "compiling_logic.h"
+#include "assembler_data_structures.h"
 
 
-void compile(FILE* start_of_assembly_file_pointer,char* input_file_name);
+void second_scan(FILE* start_of_assembly_file_pointer,key_resources* key_resources);
 static void go_over_read_line(char* chosen_line);
-int compile_asm_command_to_machine_code(char* read_command);
 
 
-void create_output_files(char* input_file_name);/*created from a different file*/
-bool is_empty(char* line);/*created from a different file*/
-bool is_comment(char* line);/*created from a different file*/
+/*created from a different file*/
+bool is_empty(char* line);
+bool is_comment(char* line);

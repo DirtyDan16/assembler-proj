@@ -12,7 +12,7 @@ Additionally, its scope is limited to this file, ensuring it doesn't interfere w
 Also, its value is only changed at a single function.
 */
 
-void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) {
+void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) { 
 	FILE* input_file_pointer = start_of_am_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	char line[GEN_LENGTH_OF_STRINGS]= {0}; /* This line stores each time a line from the asm file. (fgets() puts the info in it) */
 
