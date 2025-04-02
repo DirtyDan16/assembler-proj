@@ -449,19 +449,18 @@ void handle_entry_directive(char* entry) {
 	/* This is a placeholder for now. We will handle the entry directive in the second scan */
 }
 
-/* TODO: complete implemintation*/
 void handle_string_directive(char* value,mila data_table[]) {
 	char* value_without_quo_marks = get_string_directive_value(value);
 	if (value_without_quo_marks == NULL) return;
 
 	/* As long as there are more characters to read from, read the next character*/
 	while (*value_without_quo_marks != '\0') {
-		data_table[DC].v = 0;
-		/* Convert the character to an integer and Add the binary representation of the character to the data table */
-		data_table[DC].v = int_to_binary( (int)(*value_without_quo_marks) ) << INDEX_OF_THE_BIT_AFTER_A; /* Shift the binary value to the left by 3 bits */
+		data_table[DC].v = (*value_without_quo_marks);
 		DC++; /* Increment the Data Counter */
 		value_without_quo_marks++; /* Get the next character */
 	}
+	data_table[DC].v = '\0';
+	DC++;
 
 }
 
@@ -501,21 +500,32 @@ char* get_string_directive_value(char* value) {
 }
 
 void handle_data_directive(char* data,mila* data_table) {
-	char* data_value = strtok(data, ",");
+	char* bit_of_data = strtok(data, ",");
+	int numeric_val_of_data;
 	 
-	if (data_value == NULL) {
+	if (bit_of_data == NULL) {
 		fprintf(stderr, "Data directive is missing a value.\n LINE: %d\n", current_line_number);
 		return;
 	}
 
 	/* As long as there are more data values to read from, read the next data value*/
-	while (data_value != NULL) {
-		/* Convert the data value which is an ascii char to an integer and Add the binary representation of the data value to the data table */
-		data_table[DC].v = int_to_binary( atoi(data_value) ) << INDEX_OF_THE_BIT_AFTER_A; /* Shift the binary value to the left by 3 bits */
-		DC++; /* Increment the Data Counter */
-		data_value = strtok(NULL, ","); /* Get the next data value */
+	while (bit_of_data != NULL) {
+		numeric_val_of_data = atoi(bit_of_data);
 
-		if (is_empty(data_value)) {
+		if (numeric_val_of_data < MIN_NUMERIC_VALUE_FOR_DATA_IN_DATA_DIRECTIVE ) {
+			fprintf(stderr, "Data directive has a value that's smaller then the smallest valid number: -(2^23-1).\n LINE: %d\n", current_line_number);
+			return;
+		} else if (numeric_val_of_data > MAX_NUMERIC_VALUE_FOR_DATA_IN_DATA_DIRECTIVE) {
+			fprintf(stderr, "Data directive has a value that's bigger then the biggest valid number: 2^23-1.\n LINE: %d\n", current_line_number);
+			return;
+		}
+
+		data_table[DC].v = numeric_val_of_data;
+
+		DC++; /* Increment the Data Counter */
+		bit_of_data = strtok(NULL, ","); /* Get the next data value */
+
+		if (bit_of_data != NULL && is_empty(bit_of_data)) {
 			fprintf(stderr, "Data directive is missing a value after a comma.\n LINE: %d\n", current_line_number);
 		}
 	}
@@ -605,6 +615,8 @@ void add_label_to_table(char* label_name,int label_address, char* type,key_label
 
 /* checks if this Sentence is empty or not and return a boolean val accordingly*/
 bool is_empty(char* line) {
+	if (line == NULL) return true;
+
 	while (*line != '\0') {
 		if (!isspace(*line)) {
 			return false;
