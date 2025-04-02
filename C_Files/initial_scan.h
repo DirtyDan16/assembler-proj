@@ -27,6 +27,7 @@ int get_binary_value_of_command_name(int index_of_command);
 int get_index_of_command(char* command_name);
 
 void add_label_to_table(char* label_name,int label_address, char* type,key_label_nodes* key_resources);
+void update_all_symbols_addresses_of_type_data(int ICF,key_label_nodes* labels);
 
 bool check_if_num_of_arguments_are_valid(instruction_sentence* cur_command_sentence);
 bool is_argument_valid_for_this_specific_command(instruction_sentence* cur_command_sentence,int argument_type, int argument_number);
@@ -40,6 +41,7 @@ instruction_sentence* make_command_sentence_struct(char* command_line);
 
 extern int IC; /* The Instruction Counter. */
 extern int DC; /* The Data Counter. */
+#define START_OF_IC 100
+#define START_OF_DC 0
 
-const char* list_of_asm_command_names[] = {"mov","cmp","add","sub","lea","clr","not","inc","dec","jmp","bne","jsr","red","prn","rts","stop"};
 const char* registers[] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};

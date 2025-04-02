@@ -1,7 +1,7 @@
 #include "initial_scan.h"
 
-int IC = 100; /* The Instruction Counter. */
-int DC = 0; /* The Data Counter. */
+int IC = START_OF_IC; /* The Instruction Counter. */
+int DC = START_OF_DC; /* The Data Counter. */
 
 static int current_line_number = 1; /* Tracks the current line number for error reporting */
 /* Why this is ok as a global variable? 
@@ -23,7 +23,26 @@ void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) {
 		current_line_number++; /* Increment the line number */
 	}
 
+	/* Save the final values of IC and DC. will be used for the object file.*/
+	key_resources->ICF = IC;
+	key_resources->DCF = DC;
+
+	update_all_symbols_addresses_of_type_data(key_resources->ICF,key_resources->label_nodes);
+
 	current_line_number = 1; /* Reset the line number */
+}
+
+void update_all_symbols_addresses_of_type_data(int ICF,key_label_nodes* labels) {
+	label_node* pos = labels->head_of_label_storage;
+
+	while (pos != NULL) {
+		/*only if the type is .data*/
+		if (strcmp(pos->val.label_type,".data") == 0) {
+			pos->val.label_address += ICF; /*Add the ICF to the address.*/
+		}
+
+		pos = pos->next;
+	}
 }
 
 static void go_over_read_line(char* chosen_line,key_resources* key_resources) {

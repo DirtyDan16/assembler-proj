@@ -65,6 +65,11 @@ typedef struct key_resources {
 	instruction instruction_table[GEN_STORAGE_SIZE];/* The instruction table that will be used to store the instructions of the assembly file. */
 	int index_of_instruction_table; /* The index of the first free space of the instruction table. starts at 0, and grows by 1 each time an instruction is added. */
 	mila data_table[GEN_STORAGE_SIZE];/* The data table that will be used to store the data of the assembly file. */
+
+
+
+	int ICF; /*The final number of IC*/
+	int DCF; /*The final number of DC.*/
 } key_resources;
 
 /*------------------------------------------------------------------------------------*/
