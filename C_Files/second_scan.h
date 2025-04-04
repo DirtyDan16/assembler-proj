@@ -18,7 +18,8 @@ void deal_with_direct_type_value(instruction_sentence* cur_command_sentence,key_
 label* find_label_node(char* label_name,key_label_nodes* k_resources) ;
 void add_machine_code_of_label(mila* the_mila,label* label);
 
-void deal_with_relative_type_value();
+void deal_with_relative_type_value(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index,int argument_number);
+void add_machine_code_of_label_relative_to(mila* ptr_to_mila,label* label,int address_of_instruction_we_came_from);
 
 /*created from a different file (particularly from the first scan file, since some stuff between the two tasks are similar)*/
 bool is_empty(char* line);

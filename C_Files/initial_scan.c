@@ -30,6 +30,7 @@ void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) {
 
 	update_all_symbols_addresses_of_type_data(key_resources->ICF,key_resources->label_nodes);
 
+	fseek(input_file_pointer, 0, SEEK_SET); /* Reset the file pointer to the beginning of the file */
 	current_line_number = 1; /* Reset the line number */
 }
 
