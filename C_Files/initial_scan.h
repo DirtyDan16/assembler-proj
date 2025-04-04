@@ -13,12 +13,12 @@ void handle_string_directive(char* string,mila data_table[]);
 char* get_string_directive_value(char* value);
 void handle_extern_directive(char *extern_name, key_label_nodes *key_resources);
 
-void handle_command(char* command,key_resources* key_resources);
+static void handle_command(char* command,key_resources* key_resources);
 void add_instruction_to_table(instruction* instruction,mila binary_value_of_command,mila binary_value_for_first_argument,mila binary_value_for_second_argument,int IC,int L);
-void deal_with_first_parameter(instruction_sentence* cur_command_sentence, mila* cur_binary_value_of_command, mila* binary_value_for_first_argument, int* L);
-void deal_with_second_parameter(instruction_sentence* cur_command_sentence, mila* cur_binary_value_of_command, mila* binary_value_for_second_argument, int* L);
+static void deal_with_first_parameter(instruction_sentence* cur_command_sentence, mila* cur_binary_value_of_command, mila* binary_value_for_first_argument, int* L);
+static void deal_with_second_parameter(instruction_sentence* cur_command_sentence, mila* cur_binary_value_of_command, mila* binary_value_for_second_argument, int* L);
 
-void deal_with_direct_type_value(mila* additional_mila,char* argument);
+void deal_with_immediate_type_value(mila* additional_mila,char* argument);
 void deal_with_register_type_value(mila* cur_binary_value_of_command, instruction_sentence* cur_command_sentence,int argument_number);
 
 int determine_type_of_asm_argument(char *argument);

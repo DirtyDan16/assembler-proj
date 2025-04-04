@@ -11,6 +11,7 @@ Additionally, its scope is limited to this file, ensuring it doesn't interfere w
 
 Also, its value is only changed at a single function.
 */
+bool does_file_have_errors = false; /* This variable is used to check if the file has any errors. If it does, we won't create the object file. (and its relatives) */
 
 void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) { 
 	FILE* input_file_pointer = start_of_am_file_pointer; /* Have a tracker of which line we are corrently reading from. */
@@ -63,6 +64,7 @@ static void go_over_read_line(char* chosen_line,key_resources* key_resources) {
 
 		if (line_without_indentation == NULL) {
 			fprintf(stderr, "There's a Label without a command or directive. \n LINE: %d\n", current_line_number);
+			does_file_have_errors = true; 
 			return;
 		}
 	}
@@ -86,6 +88,7 @@ bool is_valid_command(char* line_without_indentation) {
 
 	if (inspected_word == NULL) {
 		fprintf(stderr, "The program got an invalid assembly instruction. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
 		return false; 
 	}
 
@@ -103,10 +106,11 @@ bool is_valid_command(char* line_without_indentation) {
 	}
 	/* returning 0 if the command is invalid */
 	fprintf(stderr, "The program got an invalid assembly instruction.\n LINE: %d\n", current_line_number);
+	does_file_have_errors = true;
 	return false; 
 }
 
-void handle_command(char* command,key_resources* key_resources) {
+static void handle_command(char* command,key_resources* key_resources) {
 	int L = 1; /* The amount of Milas this command will take in the instruction table. Can go up to 3 */
 
 	/* This struct will be handy and convieneient since it gathers all usefull info of this sentence in a singular place! */
@@ -118,13 +122,14 @@ void handle_command(char* command,key_resources* key_resources) {
 
 	if (!check_if_num_of_arguments_are_valid(cur_command_sentence)) {
 		fprintf(stderr, "The program got an assembly instruction with wrong amount of arguments. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true; 
 		return;
 	}
 
 
 	binary_value_of_command.v += get_binary_value_of_command_name(cur_command_sentence->index_of_command); /* Get the binary value of the command name*/
 	/* Set the A value of the command to 1 (Absolute). No need to check for anything, the first Mila will always have the R bit on! */
-	binary_value_of_command.v += 1 << INDEX_OF_THE_A_BYTE;
+	binary_value_of_command.v += 1 << INDEX_OF_THE_A_BIT;
 
 
 	/* If there are arguments added alongside the instruction, deal with the Machine Code they give appropriately.*/
@@ -241,15 +246,17 @@ bool check_if_num_of_arguments_are_valid(instruction_sentence* cur_command_sente
 
 }
 
-void deal_with_second_parameter(instruction_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_second_argument,int* L) {
+static void deal_with_second_parameter(instruction_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_second_argument,int* L) {
 	int type_of_second_argument = determine_type_of_asm_argument(cur_command_sentence->second_argument); /* Determine the type of the second argument*/
 	/* If the second argument is not valid, output an error and return*/
 	if (type_of_second_argument == NOT_VALID) {
 		fprintf(stderr, "The program got an invalid assembly instruction. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
 		return;
 	}
 	if (!is_argument_valid_for_this_specific_command(cur_command_sentence,type_of_second_argument,2)) {
 		fprintf(stderr, "The program got an invalid assembly instruction. The second argument is not valid for this command. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
 		return;
 	}
 
@@ -262,23 +269,25 @@ void deal_with_second_parameter(instruction_sentence* cur_command_sentence,mila*
 	/* All other types of arguments require to add an extra Mila, so we'll increment the L value.*/
 	} else {
 		*L += 1;
-		/* At this point of time, in the first scan, we only know how to deal with direct values. So lets check this type only*/
-		if (type_of_second_argument == DIRECT) {
-			deal_with_direct_type_value(binary_value_for_second_argument,cur_command_sentence->second_argument);
+		/* At this point of time, in the first scan, we only know how to deal with immediate values. So lets check this type only*/
+		if (type_of_second_argument == IMMEDIATE) {
+			deal_with_immediate_type_value(binary_value_for_second_argument,cur_command_sentence->second_argument);
 		}
 
 	}
 }	
 
-void deal_with_first_parameter(instruction_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_first_argument,int* L) {
+static void deal_with_first_parameter(instruction_sentence* cur_command_sentence,mila* cur_binary_value_of_command,mila* binary_value_for_first_argument,int* L) {
 	int type_of_first_argument = determine_type_of_asm_argument(cur_command_sentence->first_argument); /* Determine the type of the first argument*/
 	/* If the first argument is not valid, output an error and return*/
 	if (type_of_first_argument == NOT_VALID) {
 		fprintf(stderr, "The program got an invalid assembly instruction. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
 		return;
 	}
 	if (!is_argument_valid_for_this_specific_command(cur_command_sentence,type_of_first_argument,1)) {
 		fprintf(stderr, "The program got an invalid assembly instruction. The first argument is not valid for this command. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
 		return;
 	}
 
@@ -291,9 +300,9 @@ void deal_with_first_parameter(instruction_sentence* cur_command_sentence,mila* 
 	/* All other types of arguments require to add an extra Mila, so we'll increment the L value.*/
 	} else {
 		*L += 1;
-		/* At this point of time, in the first scan, we only know how to deal with direct values. So lets check this type only*/
-		if (type_of_first_argument == DIRECT) {
-			deal_with_direct_type_value(binary_value_for_first_argument,cur_command_sentence->first_argument);
+		/* At this point of time, in the first scan, we only know how to deal with immediate values. So lets check this type only*/
+		if (type_of_first_argument == IMMEDIATE) {
+			deal_with_immediate_type_value(binary_value_for_first_argument,cur_command_sentence->first_argument);
 		}
 
 	}
@@ -301,19 +310,19 @@ void deal_with_first_parameter(instruction_sentence* cur_command_sentence,mila* 
 		
 }
 
-void deal_with_direct_type_value(mila* additional_mila,char* argument) {
+void deal_with_immediate_type_value(mila* additional_mila,char* argument) {
 	char* argument_without_hash = strtok(argument,"#"); /* Get the argument without the '#' char*/
-	int value_of_direct_argument = atoi(argument_without_hash); /* Convert the direct argument to a decimal int */
+	int value_of_immediate_argument = atoi(argument_without_hash); /* Convert the direct argument to a decimal int */
 
 	/* Take the decimal value of the direct argument and bit shift it to the left so it doesn't collide with the A.R.E bits!*/
-	mila binary_value_of_direct_argument;
-	binary_value_of_direct_argument.v = value_of_direct_argument << INDEX_OF_THE_BIT_AFTER_A; 
-	binary_value_of_direct_argument.v += 1 << INDEX_OF_THE_A_BYTE; /* Set the A value of the direct argument to 1 (Absolute) */
+	mila binary_value_of_immediate_argument;
+	binary_value_of_immediate_argument.v = value_of_immediate_argument << INDEX_OF_THE_BIT_AFTER_A; 
+	binary_value_of_immediate_argument.v += 1 << INDEX_OF_THE_A_BIT; /* Set the A value of the immediate argument to 1 (Absolute) */
 
-	/* Add the binary value of the direct argument to the binary value of the additional mila */
-	(*additional_mila).v = binary_value_of_direct_argument.v;
+	/* Add the binary value of the immediate argument to the binary value of the additional mila */
+	(*additional_mila).v = binary_value_of_immediate_argument.v;
 
-	/* Since we are dealing with a direct value, we need to set the addressing mode to direct to the Mila,
+	/* Since we are dealing with a immediate value, we need to set the addressing mode to immediate to the Mila,
 	HOWEVER the value of the addressing mode is convinently 0, which is the default value of the mila.
 	So we don't need to do anything here. */
 }
@@ -339,15 +348,15 @@ void deal_with_register_type_value(mila* cur_binary_value_of_command,instruction
 	add that value unto the binary value of the first mila.*/
 	if (cur_command_sentence->num_of_arguments == 2) {
 		if (argument_number == 1) { /* Source*/
-			(*cur_binary_value_of_command).v += register_number << INDEX_OF_SOURCE_REGISTER_BYTE;
-			(*cur_binary_value_of_command).v += REGISTER << INDEX_OF_SOURCE_ADDRESING_MODE_BYTE;
+			(*cur_binary_value_of_command).v += register_number << INDEX_OF_SOURCE_REGISTER_BIT;
+			(*cur_binary_value_of_command).v += REGISTER << INDEX_OF_SOURCE_ADDRESING_MODE_BIT;
 		} else if (argument_number == 2) /* Target*/ {
-			(*cur_binary_value_of_command).v += register_number << INDEX_OF_TARGET_REGISTER_BYTE;
-			(*cur_binary_value_of_command).v += REGISTER << INDEX_OF_TARGET_ADDRESING_MODE_BYTE;
+			(*cur_binary_value_of_command).v += register_number << INDEX_OF_TARGET_REGISTER_BIT;
+			(*cur_binary_value_of_command).v += REGISTER << INDEX_OF_TARGET_ADDRESING_MODE_BIT;
 		}
 	} else if (cur_command_sentence->num_of_arguments == 1) { /* If there is only 1 argument, it has to be the target*/
-		(*cur_binary_value_of_command).v += register_number << INDEX_OF_TARGET_REGISTER_BYTE;
-		(*cur_binary_value_of_command).v += REGISTER << INDEX_OF_TARGET_ADDRESING_MODE_BYTE;
+		(*cur_binary_value_of_command).v += register_number << INDEX_OF_TARGET_REGISTER_BIT;
+		(*cur_binary_value_of_command).v += REGISTER << INDEX_OF_TARGET_ADDRESING_MODE_BIT;
 	} else {
 		return; /* If there are no arguments, do nothing */
 	}
@@ -424,13 +433,14 @@ int get_binary_value_of_command_name(int index_of_command) {
 
 	if (index_of_command == -1) {
 		fprintf(stderr, "The program got an invalid assembly instruction. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
 		return -1;
 	}
 
 	/* Get the opcode and funct values of the command and add them to the machine code representation of the command.
 	Do it via bit shifting to the desired index*/
-	machine_code_rep_of_command += instructions_machine_code_rep[index_of_command].opcode << INDEX_OF_OPCODE_BYTE;
-	machine_code_rep_of_command += instructions_machine_code_rep[index_of_command].funct << INDEX_OF_FUNCT_BYTE;	
+	machine_code_rep_of_command += instructions_machine_code_rep[index_of_command].opcode << INDEX_OF_OPCODE_BIT;
+	machine_code_rep_of_command += instructions_machine_code_rep[index_of_command].funct << INDEX_OF_FUNCT_BIT;	
 	
 	return machine_code_rep_of_command;
 }
@@ -442,6 +452,7 @@ void handle_directive(char* line,key_resources* key_resources) {
 
 	if (directive_name == NULL || directive_value == NULL) {
 		fprintf(stderr, "A directive is missing a name or a value.\n \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
 		return;
 	}
 
@@ -456,6 +467,7 @@ void handle_directive(char* line,key_resources* key_resources) {
 		handle_extern_directive(directive_value,key_resources->label_nodes);
 	} else {
 		fprintf(stderr, "Unknown directive. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
 	}
 	
 }
@@ -488,6 +500,7 @@ char* get_string_directive_value(char* value) {
 
 	if (value == NULL) {
 		fprintf(stderr, "String directive is missing a value. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
 		return NULL;
 	}
 
@@ -496,6 +509,7 @@ char* get_string_directive_value(char* value) {
 
 	if (*value != '\"') {
 		fprintf(stderr, "String directive's value doesn't correctly open and close with: ' \" '. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
 		return NULL;
 	} else {
 		*value = '\0';
@@ -509,6 +523,7 @@ char* get_string_directive_value(char* value) {
 
 	if (*end != '\"') {
 		fprintf(stderr, "String directive's value doesn't correctly open and close with: ' \" '. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
 		return NULL;
 	} else {
 		*end = '\0';
@@ -523,6 +538,7 @@ void handle_data_directive(char* data,mila* data_table) {
 	 
 	if (bit_of_data == NULL) {
 		fprintf(stderr, "Data directive is missing a value.\n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
 		return;
 	}
 
@@ -532,9 +548,11 @@ void handle_data_directive(char* data,mila* data_table) {
 
 		if (numeric_val_of_data < MIN_NUMERIC_VALUE_FOR_DATA_IN_DATA_DIRECTIVE ) {
 			fprintf(stderr, "Data directive has a value that's smaller then the smallest valid number: -(2^23-1).\n LINE: %d\n", current_line_number);
+			does_file_have_errors = true;
 			return;
 		} else if (numeric_val_of_data > MAX_NUMERIC_VALUE_FOR_DATA_IN_DATA_DIRECTIVE) {
 			fprintf(stderr, "Data directive has a value that's bigger then the biggest valid number: 2^23-1.\n LINE: %d\n", current_line_number);
+			does_file_have_errors = true;
 			return;
 		}
 
@@ -545,6 +563,7 @@ void handle_data_directive(char* data,mila* data_table) {
 
 		if (bit_of_data != NULL && is_empty(bit_of_data)) {
 			fprintf(stderr, "Data directive is missing a value after a comma.\n LINE: %d\n", current_line_number);
+			does_file_have_errors = true;
 		}
 	}
 }
@@ -649,3 +668,4 @@ bool is_empty(char* line) {
 bool is_comment(char* line) {
 	return line[0] == ';';
 }
+

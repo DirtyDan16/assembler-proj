@@ -23,7 +23,10 @@ typedef struct mila {
     int v : 24; /* 24 bits for the value */
 } mila;
 
+extern bool does_file_have_errors; /* This will be used to determine if the file has errors or not. If it does, we won't create the object file. */
+
 /* Method names that are needed to be known on a global scope. Those are utility functions that come from utils.c*/
+
 extern char* concatenate_strings(char* str1,char* str2);
 
 extern int advance_to_char_in_file(FILE *file, char target);

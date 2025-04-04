@@ -24,16 +24,147 @@ static void go_over_read_line(char* chosen_line,key_resources* k_resources) {
 	chosen_line = look_for_first_non_whitespace_char(chosen_line); /* This will hold the line without indentation. Will be used to get the raw value of the line so we can compare correctly with certain keywords. */
 	chosen_line = skip_label_name(chosen_line);
 
+	/* Determine which type this sentence is.*/
 	if (is_directive(chosen_line)) {
-		directive_type	= strtok(strdup(chosen_line),"");
+		directive_type = strtok(strdup(chosen_line),"");
 		if (strcmp(directive_type, ".entry") == 0) {
 			handle_entry_directive(chosen_line,k_resources);
 		} else {
 			return;
 		}
 		free(directive_type);
-	};
+	} else if (is_valid_command(chosen_line)) {
+		handle_command(chosen_line,k_resources);
+	} else {
+		/*no need to output the same error in both scans*/
+	}
+	
 
+}
+
+static void handle_command(char* command,key_resources* k_resources) {
+	static int index_in_instruction_table = 0; /* This will hold the index of the cur instruction we haven't went over in the instruction table. */
+
+	/* This struct will be handy and convieneient since it gathers all usefull info of this sentence in a singular place! */
+	instruction_sentence* cur_command_sentence = make_command_sentence_struct(command);
+
+	/* If there are arguments added alongside the instruction, deal with the Machine Code they give appropriately.*/
+	if (cur_command_sentence->first_argument != NULL) {
+		deal_with_first_parameter(cur_command_sentence,k_resources,index_in_instruction_table);
+
+		if (cur_command_sentence->second_argument != NULL) {
+			deal_with_second_parameter(cur_command_sentence,k_resources,index_in_instruction_table);
+		}
+	}
+
+	/* Update the index of the instruction table. */
+	index_in_instruction_table++;
+}
+
+
+static void deal_with_second_parameter(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index_in_instruction_table) {
+	int type_of_second_argument = determine_type_of_asm_argument(cur_command_sentence->second_argument); /* Determine the type of the first argument*/
+	
+	/* ~~ No need to check the validity of the argument for the specific command if we got to the second scan ~~*/
+
+
+	/* In the first scan, we dealt with the encoding for the immediate and register types, and now, in the second scan we'll deal with the other 2 types of arguments.*/
+	if (type_of_second_argument == DIRECT) {
+		deal_with_direct_type_value(cur_command_sentence,k_resources,index_in_instruction_table,2);
+	} else if (type_of_second_argument == RELATIVE) {
+		deal_with_relative_type_value();
+	}
+}
+
+static void deal_with_first_parameter(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index_in_instruction_table) {
+	int type_of_first_argument = determine_type_of_asm_argument(cur_command_sentence->first_argument); /* Determine the type of the first argument*/
+	
+	/* ~~ No need to check the validity of the argument for the specific command if we got to the second scan ~~*/
+
+
+	/* In the first scan, we dealt with the encoding for the immediate and register types, and now, in the second scan we'll deal with the other 2 types of arguments.*/
+	if (type_of_first_argument == DIRECT) {
+		deal_with_direct_type_value(cur_command_sentence,k_resources,index_in_instruction_table,1);
+	} else if (type_of_first_argument == RELATIVE) {
+		deal_with_relative_type_value();
+	}
+}
+
+
+void deal_with_direct_type_value(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index,int argument_number) {
+	instruction (*table)[] = &(k_resources->instruction_table); /* This will hold the instruction table. */
+
+	mila code_of_command = (*table)[index].code_of_command; /* This will hold the code of the command. */
+	mila code_of_first_additional_mila = (*table)[index].code_of_first_argument; /* This will hold the code of the first additional mila. */
+	mila code_of_second_additional_mila = (*table)[index].code_of_second_argument; /* This will hold the code of the second additional mila. */
+
+	
+	char* argument = argument_number == 1 ? cur_command_sentence->first_argument : cur_command_sentence->second_argument; /* This will hold the argument. */
+	label* wanted_label = find_label_node(argument,k_resources->label_nodes); /* This will hold the label struct. */
+	if (wanted_label == NULL) return; /* If the label node is NULL, we can't do anything. */
+
+
+	/* We need to distinguish between 2 and 1 arguments scenarios.
+		* If there are 2 arguments, the first argument is the source and the second is the target.
+		* If there is 1 argument, the first argument is the target.
+	 
+	   Regardless of the amount of arguments, we need to add the label address (the argument we got) to the machine code in the additional mila.
+	*/
+	if (cur_command_sentence->num_of_arguments == 2) {
+		if (argument_number == 1) {
+			code_of_command.v += DIRECT << INDEX_OF_SOURCE_ADDRESING_MODE_BIT; 
+			add_machine_code_of_label(&code_of_first_additional_mila,wanted_label); 
+		} else if (argument_number == 2) {
+			code_of_command.v += DIRECT << INDEX_OF_TARGET_ADDRESING_MODE_BIT; 
+			add_machine_code_of_label(&code_of_second_additional_mila,wanted_label);
+		}
+	} else if (cur_command_sentence->num_of_arguments == 1) {
+		code_of_command.v += DIRECT << INDEX_OF_TARGET_ADDRESING_MODE_BIT; 
+		add_machine_code_of_label(&code_of_first_additional_mila,wanted_label); 
+	} else {
+		return; /* If there are no arguments, do nothing */
+	}
+}
+
+
+void add_machine_code_of_label(mila* ptr_to_mila,label* label) {
+	/* Add the address of the label to the mila. */
+	(*ptr_to_mila).v += label->label_address << INDEX_OF_THE_BIT_AFTER_A;
+
+	/* Now we want to change the A.R.E fields correctly.*/
+
+	/* If the label is external, we set the E (external) bit to 1, and the others we keep at 0 */
+	if (strcmp(label->label_type,".external") == 0) {
+		(*ptr_to_mila).v += 1 << INDEX_OF_THE_E_BIT;
+	/* Otherwise, we set the R (relative) bit to 1, and the other two keep at 0*/
+	} else {
+		(*ptr_to_mila).v += 1 << INDEX_OF_THE_R_BIT;
+	}
+}
+
+label* find_label_node(char* label_name,key_label_nodes* k_resources) {
+	label_node* pos = k_resources->head_of_label_storage; /* This will hold the label node. */
+
+	if (pos == NULL) {
+		fprintf(stderr, "The program got a label as an argument for an instruction, but the file doesn't define ANY labels. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
+		return NULL;
+	}
+
+	while (pos != NULL) {
+		if (strcmp(pos->val.label_name,label_name) == 0) {
+			return &(pos->val);
+		}
+		pos = pos->next;
+	}
+
+	fprintf(stderr, "The program got a label as an argument for an instruction, but the label doesn't exist at all. \n LINE: %d\n", current_line_number);
+	does_file_have_errors = true;
+	return NULL;
+}
+
+void deal_with_relative_type_value() {
+	
 }
 
 void handle_entry_directive(char* entry_sentence,key_resources* k_resources) {
@@ -48,11 +179,11 @@ void handle_entry_directive(char* entry_sentence,key_resources* k_resources) {
 		fprintf(stderr, "Entry directive is missing a value. \n LINE: %d\n", current_line_number);
 		return;
 	}
-	look_for_label_in_table(entry_value,k_resources); /* This will look for the label in the label table. */
+	look_for_label_in_table_for_entries(entry_value,k_resources); /* This will look for the label in the label table. */
 
 }
 
-void look_for_label_in_table(char* label_name,key_resources* k_resources) {
+void look_for_label_in_table_for_entries(char* label_name,key_resources* k_resources) {
 	key_label_nodes* key_labels = k_resources->label_nodes; /* This will hold the label nodes. */
 
 
