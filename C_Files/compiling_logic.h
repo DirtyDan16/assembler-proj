@@ -110,4 +110,7 @@ static const int num_of_arguments_each_command_has[16] = {2,2,2,2,2,1,1,1,1,1,1,
 #define MAX_NUMERIC_VALUE_FOR_DATA_IN_DATA_DIRECTIVE pow(2,23)-1
 #define MIN_NUMERIC_VALUE_FOR_DATA_IN_DATA_DIRECTIVE -MAX_NUMERIC_VALUE_FOR_DATA_IN_DATA_DIRECTIVE
 
+
+#define MAX_LENGTH_OF_LABEL 31
+
 #endif

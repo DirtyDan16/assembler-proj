@@ -451,7 +451,7 @@ void handle_directive(char* line,key_resources* key_resources) {
 	} else if (strcmp(directive_name, ".string") == 0) {
 		handle_string_directive(directive_value,key_resources->data_table);		
 	} else if (strcmp(directive_name, ".entry") == 0) {
-		handle_entry_directive(directive_value);
+		/* This is a placeholder for now. We will handle the entry directive in the second scan */
 	} else if (strcmp(directive_name, ".extern") == 0) {
 		handle_extern_directive(directive_value,key_resources->label_nodes);
 	} else {
@@ -464,12 +464,10 @@ void handle_extern_directive(char* extern_name,key_label_nodes* key_resources) {
 	add_label_to_table(extern_name,0,".external",key_resources); /* Add the label name to the table*/
 }
 
-void handle_entry_directive(char* entry) {
-	/* This is a placeholder for now. We will handle the entry directive in the second scan */
-}
 
 void handle_string_directive(char* value,mila data_table[]) {
 	char* value_without_quo_marks = get_string_directive_value(value);
+	char* ptr_to_start = value_without_quo_marks; /*to free*/
 	if (value_without_quo_marks == NULL) return;
 
 	/* As long as there are more characters to read from, read the next character*/
@@ -481,6 +479,7 @@ void handle_string_directive(char* value,mila data_table[]) {
 	data_table[DC].v = '\0';
 	DC++;
 
+	free(ptr_to_start); /* Free the memory allocated for the string value */
 }
 
 char* get_string_directive_value(char* value) {
@@ -607,6 +606,7 @@ void add_label_to_table(char* label_name,int label_address, char* type,key_label
 	new_label.label_name = label_name;
 	new_label.label_address = label_address;
 	new_label.label_type = type;
+	new_label.is_entry = false; /* Set the is_entry flag to false by default */
 
 	/* Allocate memory for the new label node */
 	new_label_node = (label_node*)malloc(sizeof(label_node));

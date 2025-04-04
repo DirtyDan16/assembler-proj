@@ -28,6 +28,7 @@ typedef struct label {
 	char* label_name;
 	int label_address;
 	char* label_type;
+	bool is_entry; /* A boolean that indicates if the label is an entry or not. */
 } label;
 
 /* Define the struct representing a label node*/
@@ -58,6 +59,7 @@ typedef struct instruction {
 
 /*------------------------------------------------------------------------------------*/
 /*A special struct that aggregates pointers to key nodes/arrays of data structures.
+	This also holds special information, such as abou0 the instruction and data tables.
    This struct is used to easily access and manage the head, current, and last nodes of all data structures, or a certain index of an array */
 typedef struct key_resources {
 	key_macro_nodes* macro_nodes;
@@ -70,6 +72,8 @@ typedef struct key_resources {
 
 	int ICF; /*The final number of IC*/
 	int DCF; /*The final number of DC.*/
+
+	bool is_there_any_entry; /* A boolean that indicates if there is any entry in the label table. If there is, we build the entries file. */
 } key_resources;
 
 /*------------------------------------------------------------------------------------*/
