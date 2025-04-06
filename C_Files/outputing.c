@@ -13,20 +13,118 @@ void copy_content_from_a_file_to_another(FILE* copied_file, FILE* file_to_copy_t
 }
 
 
-void create_output_files(char* input_file_name) {
-	/*FILE* object_file;*/
-	/*entries_file,externals_file;*/
+void create_output_files(char* input_file_name,key_resources* key_resources) {
+	FILE* object_file = NULL,* entries_file = NULL,* externals_file = NULL;
 
 	/* The variables which will hold all of the output file names.*/
-	char object_file_name[GEN_LENGTH_OF_STRINGS];
+	char* object_file_name = malloc(strlen(DIRECTORY_TO_OUTPUT_FILES)+strlen(input_file_name)+strlen(".ob")+1);
+	char* entries_file_name = malloc(strlen(DIRECTORY_TO_OUTPUT_FILES)+strlen(input_file_name)+strlen(".ent")+1);
+	char* externals_file_name = malloc(strlen(DIRECTORY_TO_OUTPUT_FILES)+strlen(input_file_name)+strlen(".ext")+1);
 	
+	if (object_file_name == NULL || entries_file_name == NULL || externals_file_name == NULL) {
+		fprintf(stderr, "The program did not manage to get enough storage to store the output file names.");
+		exit(1);
+	}
 
-	strcat(object_file_name,strcat(input_file_name,".ob")); /* Name the output object file to the name of the assembly file we read from, and add the '.ob' suffix*/
+	/* Create the output files, with their file path and suffix*/
 
-	fopen(object_file_name,"w"); /* Create the object file (the file which will have the machine code) and make it writeable.*/
+	strcpy(object_file_name,DIRECTORY_TO_OUTPUT_FILES);
+	strcat(object_file_name,input_file_name); 
+	strcat(object_file_name,".ob"); /* Name the output object file to the name of the assembly file we read from, and add the '.ob' suffix*/
+
+	/* Create the object file (the file which will have the machine code) and make it writeable.*/
+	printf("Opening file: %s\n", object_file_name);
+	object_file = fopen(object_file_name,"w+");
+	if (object_file == NULL) { 
+		fprintf(stderr, "The program could not create the object file. \n FILE NAME: %s\n", input_file_name);
+		exit(1);
+	} else {
+		write_into_object_file(object_file,key_resources); /* Write the object file. */
+	}
+
+	if (key_resources->is_there_any_entry) {
+		strcpy(entries_file_name,DIRECTORY_TO_OUTPUT_FILES);
+		strcat(entries_file_name,input_file_name); /* Name the output object file to the name of the assembly file we read from, and add the '.ent' suffix*/
+		strcat(entries_file_name,".ent");
+		/* Create the entries file (the file which will have the entries) and make it writeable.*/
+		entries_file = fopen(entries_file_name,"w+");
+		if (entries_file == NULL) {
+			fprintf(stderr, "The program could not create the entries file. \n FILE NAME: %s\n", input_file_name);
+			exit(1);
+		} else {
+			write_into_entries_file(entries_file,key_resources); /* Write the entries file. */
+		}	
+	}
+
+	if (key_resources->is_there_any_externs) {
+		strcpy(externals_file_name,DIRECTORY_TO_OUTPUT_FILES);
+		strcat(externals_file_name,input_file_name); /* Name the output object file to the name of the assembly file we read from, and add the '.ext' suffix*/
+		strcat(externals_file_name,".ext");
+		 /* Create the externals file (the file which will have the externals) and make it writeable.*/
+		externals_file = fopen(externals_file_name,"w+");
+		if (externals_file == NULL) {
+			fprintf(stderr, "The program could not create the externals file. \n FILE NAME: %s\n", input_file_name);
+			exit(1);
+		} else {
+			write_into_externals_file(externals_file,key_resources); /* Write the externals file. */
+		}
+	}
 	
 }
 
+void write_into_object_file(FILE* object_file,key_resources* key_resources) {
+	int i = 0;
+
+	instruction *table = key_resources->instruction_table; /* The instruction table that's used to store the instructions of the assembly file. */
+
+	/* Write the length of IC and DC to the object file */
+	fprintf(object_file,"%d %d\n",key_resources->ICF - START_OF_IC,key_resources->DCF);
+
+	/* Write the object file. firstly - all instruction Milas*/
+	/* We go over every value that isn't empty in the table*/
+	while (table[i].code_of_command.v != 0) {
+		int length_of_instruction = table[i].L; /* The length of the instruction in Milas*/
+
+		fprintf(object_file,"%07d %06x\n",table[i].IC,table[i].code_of_command.v);
+		if (length_of_instruction >= 2) {
+			fprintf(object_file,"%07d %06x\n",table[i].IC + 1,table[i].code_of_first_argument.v);
+		}
+		if (length_of_instruction == 3) {
+			fprintf(object_file,"%07d %06x\n",table[i].IC + 2,table[i].code_of_second_argument.v);
+		}
+		
+		i++;
+		
+	}
+
+	/* Now, write the data table. */
+	for (i = 0; i < key_resources->DCF; i++) {
+		fprintf(object_file,"%07d %06x\n",key_resources->ICF + i ,key_resources->data_table[i].v);
+	}
+}
+
+void write_into_entries_file(FILE* entries_file,key_resources* key_resources) {
+	label_node* pos = key_resources->label_nodes->head_of_label_storage; /* This will hold the label node. */
+
+	/* Write the entries file. */
+	while (pos != NULL) {
+		if (pos->val.is_entry) {
+			fprintf(entries_file,"%s %07d\n",pos->val.label_name,pos->val.label_address);
+		}
+		pos = pos->next;
+	}
+}
+
+void write_into_externals_file(FILE* externals_file,key_resources* key_resources) {
+	extern_label_node* extern_refrence_pos = key_resources->extern_label_nodes->head_of_extern_label_storage; /* this pos node keeps track of all the extern labels refrences as arguments.*/
+
+	/* Write all refrences to those externs info*/
+	while (extern_refrence_pos != NULL) {
+		fprintf(externals_file,"%s %07d\n",extern_refrence_pos->val.label_name,extern_refrence_pos->val.label_address);
+
+		extern_refrence_pos = extern_refrence_pos->next;
+	}
+}
 
 FILE* create_after_macro_file(char* assembly_file_name) {
 	FILE* am_file;
@@ -52,6 +150,3 @@ void remove_am_file(char* am_file_name) {
 
 	remove(am_file_path); /* Remove the after-macro file (the file which has the asm code after translating macros.) */
 }
-
-
-

@@ -108,6 +108,10 @@ static const int num_of_arguments_each_command_has[16] = {2,2,2,2,2,1,1,1,1,1,1,
 
 #define MAX_LENGTH_OF_LABEL 31
 
-#define NUM_OF_RESERVED_WORDS 32
+#define NUM_OF_RESERVED_WORDS 30
+
+
+#define START_OF_IC 100
+#define START_OF_DC 0
 
 #endif

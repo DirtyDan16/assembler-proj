@@ -26,11 +26,11 @@ PROCESS: mov r3, r2
     add r1, r2
     cmp r1, r4
 
-NEXT: mov r4, r7
-    lea X, r4
+NEXT: mov r4, r8
+    lea X, r9
     cmp r4, #-5
     bne &PROCESS
-    dec r4
+    dec r9
 
 END: stop
 

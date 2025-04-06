@@ -40,11 +40,29 @@ typedef struct label_node {
 /* create a struct that hold pointers to specific needed label_nodes.*/
 typedef struct key_label_nodes {
 	label_node* head_of_label_storage;
-	label_node* cur_label_node;
 	label_node* last_label_node;
 } key_label_nodes;
 
 /*------------------------------------------------------------------------------------*/
+
+/* A struct defining extern labels that we find AS AN ARGUMENT, not when they are declared.*/
+typedef struct extern_label {
+	char* label_name;
+	int label_address; /* The address this label ~appears~ as an argument*/
+} extern_label;
+
+/* A struct defining extern label nodes. */
+typedef struct extern_label_node {
+	extern_label val;
+	struct extern_label_node* next;
+} extern_label_node;
+
+/* A struct defining extern label nodes. */
+typedef struct key_extern_label_nodes {
+	extern_label_node* head_of_extern_label_storage;
+	extern_label_node* last_extern_label_node;
+} key_extern_label_nodes;
+/*-----------------------------------------------------------------------------------*/
 
 /* A struct that holds the code of an instruction, plus its IC and length. */
 typedef struct instruction {
@@ -64,6 +82,7 @@ typedef struct instruction {
 typedef struct key_resources {
 	key_macro_nodes* macro_nodes;
 	key_label_nodes* label_nodes;
+	key_extern_label_nodes* extern_label_nodes;
 	instruction instruction_table[GEN_STORAGE_SIZE];/* The instruction table that will be used to store the instructions of the assembly file. */
 	int index_of_instruction_table; /* The index of the first free space of the instruction table. starts at 0, and grows by 1 each time an instruction is added. */
 	mila data_table[GEN_STORAGE_SIZE];/* The data table that will be used to store the data of the assembly file. */
@@ -74,6 +93,7 @@ typedef struct key_resources {
 	int DCF; /*The final number of DC.*/
 
 	bool is_there_any_entry; /* A boolean that indicates if there is any entry in the label table. If there is, we build the entries file. */
+	bool is_there_any_externs; /* A boolean that indicates if there is any extern in the label table. If there is, we build the externals file. */
 } key_resources;
 
 /*------------------------------------------------------------------------------------*/

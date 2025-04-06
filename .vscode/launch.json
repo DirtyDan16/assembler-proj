@@ -41,8 +41,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": ".",
-      "program": "build/Debug/outDebug",
+      "cwd": "c:/Users/stavg/Documents/assembler proj/C_Files",
+      "program": "c:/Users/stavg/Documents/assembler proj/C_Files/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

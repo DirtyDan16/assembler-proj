@@ -44,8 +44,16 @@ int main(int argc, char *argv[]) {
 			free_data_structures(key_resources);
 			continue;
 		}
+
 		initial_scan(am_file,key_resources);
 		second_scan(am_file,key_resources);
+
+		/* Create the output files */
+		if (does_file_have_errors) {
+			fprintf(stderr, "the file %s has errors, and will not be compiled.\n", assembly_file_name);
+		} else {
+			create_output_files(assembly_file_name,key_resources); /* Create the output files */
+		}
 
 		/* Free the data structures */
 		free_data_structures(key_resources);
@@ -74,7 +82,6 @@ key_resources* init_data_structures() {
 	resources->macro_nodes->last_macro_node = NULL;
 	
 	resources->label_nodes->head_of_label_storage = NULL;
-	resources->label_nodes->cur_label_node = NULL;
 	resources->label_nodes->last_label_node = NULL;
 
 	resources->extern_label_nodes->head_of_extern_label_storage = NULL;
@@ -100,7 +107,6 @@ void free_data_structures(key_resources* resources) {
 	free(resources->macro_nodes);
 	/* Free the label nodes */
 	free(resources->label_nodes->head_of_label_storage);
-	free(resources->label_nodes->cur_label_node);
 	free(resources->label_nodes->last_label_node);
 	free(resources->label_nodes);
 

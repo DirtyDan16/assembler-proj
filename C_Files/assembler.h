@@ -10,6 +10,7 @@ void free_data_structures(key_resources* key_nodes);
 FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,key_macro_nodes* macro_nodes);
 void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_nodes);
 void second_scan(FILE* start_of_assembly_file_pointer,key_resources* key_resources);
+void create_output_files(char* input_file_name,key_resources* key_resources);
 
 
 void free_macro_storage(key_macro_nodes* key_nodes);
