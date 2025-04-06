@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 
 		input_file_path = concatenate_strings(DIRECTORY_TO_INPUT_FILES, argv[i]);
 		
-		printf("path: %s\n", input_file_path);
+		printf("\n\n~~~~~~~~~~~~~~~~ Path: %s ~~~~~~~~~~~~~~~~\n\n", input_file_path);
 		
 		if ((assembly_file_pointer = fopen(input_file_path, "r")) == NULL && (assembly_file_pointer = fopen(argv[i], "r")) == NULL) {
 			fprintf(stderr, "the program did not get a file that can be opened!\n");

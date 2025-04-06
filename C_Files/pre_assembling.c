@@ -41,7 +41,8 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,
 	}
 
 
-	free_macro_storage(key_nodes); /* Free the macro storage since we are done with it. */
+	/*NOTE: won't get rid of macro storage just yet, we'll have a use for it in the first scan*/
+
 	fseek(am_file, 0, SEEK_SET); /* Go back to the start of the file so we can read from the start of the file.*/
 	current_line_number = 1; /* Reset the line number */
 	return am_file;
@@ -71,6 +72,7 @@ char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_n
 		printf("New macro being declared!\n");
 
 		ptr_to_remaining_of_macro_line = (strchr(line_without_indentation,' ')+1); /* Point at the remaining part of the line (the actual name of the macro)*/
+		replace_char_with_null(ptr_to_remaining_of_macro_line,'\n');
 
 		printf(" macro name: %s\n",ptr_to_remaining_of_macro_line);
 
@@ -128,18 +130,25 @@ char* inside_macro_declaration_state(char* line,FILE* am_file,char* state,key_ma
 }
 
 bool check_if_line_is_a_defined_macro(char* chosen_line,key_macro_nodes* key_nodes) {
+	char* cpy_chosen_line = strdup(chosen_line);
+	if (cpy_chosen_line == NULL) {
+		fprintf(stderr, "Memory allocation failed.\n");
+		exit(1);
+	}
+
 	key_nodes->cur_macro_node = key_nodes->head_of_macro_storage; /* Initialize the current macro node to the head of the list of known macros. */
 	
-	/* If the chosen_line does not end with a newline character, add one. (so comarision is with two strings with a \n) */
-	if (strchr(chosen_line, '\n') == NULL) {
-		strcat(chosen_line, "\n");
+	/* If the chosen_line does ends with a newline character, remove it. (so comarision is with two strings without a \n) */
+	if (strchr(cpy_chosen_line, '\n')) {
+		replace_char_with_null(cpy_chosen_line,'\n');
 	}
 	
 	
 	/* Go over all the elements in the storage of known macros. if the name of the line correspounds to a known macro, return true (there is a macro name like this name) otherwise return false*/
 	while (key_nodes->cur_macro_node != NULL) {
-		if (strcmp(chosen_line,key_nodes->cur_macro_node->val.macro_name)==0) {
-			printf("read line is a macro! (%s)\n",chosen_line);
+		if (strcmp(cpy_chosen_line,key_nodes->cur_macro_node->val.macro_name)==0) {
+			printf("read line is a macro! (%s)\n",cpy_chosen_line);
+			free(cpy_chosen_line);
 			return true;
 		}
 		key_nodes->cur_macro_node = key_nodes->cur_macro_node->next; /* advance to the next macro node in the list*/
@@ -147,6 +156,7 @@ bool check_if_line_is_a_defined_macro(char* chosen_line,key_macro_nodes* key_nod
 	}
 	
 	/* If we got here, it means there isn't a macro in this line. returning false so we don't try to translate anything.*/
+	free(cpy_chosen_line);
 	return false;
 }
 
@@ -226,11 +236,6 @@ bool is_valid_macro_name(char* macro_name) {
 			return false;
 		}
 	}
-	if (macro_name[strlen(macro_name) - 1] != '\n') {
-		fprintf(stderr, "A macro name must end with a newline character. \n LINE: %d\n", current_line_number);
-		return false;
-	}
-
 
 	return true;
 }

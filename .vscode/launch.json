@@ -1,5 +1,5 @@
 {
-  "version": "0.2.1",
+  "version": "0.2.2",
   "configurations": [
     {
       "name": "Debug Assembler",
@@ -8,7 +8,8 @@
       "program": "${workspaceFolder}/assembler",
       "args": [
         "input1.as",
-        "input2.as"
+        "input2.as",
+        "invalid1.as"
       ],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",

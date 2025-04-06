@@ -4,7 +4,7 @@ void second_scan(FILE* start_of_assembly_file_pointer,key_resources* k_resources
 	FILE* input_file_pointer = start_of_assembly_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	char line[GEN_LENGTH_OF_STRINGS]; /* This line stores each time a line from the asm file. (fgets() puts the info in it) */
 
-	printf("\n\tGoing through second scan of the file.\n");
+	printf("\n ---------> Going through second scan of the file. <---------\n");
 	/* As long as there are more lines to read from, read the next line*/
 	while (fgets(line, GEN_LENGTH_OF_STRINGS, input_file_pointer) != NULL) {
 		go_over_read_line(line,k_resources);
@@ -12,6 +12,8 @@ void second_scan(FILE* start_of_assembly_file_pointer,key_resources* k_resources
 	}
 
 	current_line_number = 1; /* Reset the line number */
+
+	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 
 }
 
@@ -21,10 +23,14 @@ static void go_over_read_line(char* chosen_line,key_resources* k_resources) {
 	/* If the line is empty or a comment, skip it*/
 	if (is_empty(chosen_line) || is_comment(chosen_line)) return;
 
-	if (has_semicolon(chosen_line)) return; /* If the line has a comment in the middle, skip it.*/
-
 	chosen_line = look_for_first_non_whitespace_char(chosen_line); /* This will hold the line without indentation. Will be used to get the raw value of the line so we can compare correctly with certain keywords. */
+	
+	if (has_semicolon(chosen_line)) return; /* If the line has a comment in the middle, skip it.*/
+	
 	chosen_line = skip_label_name(chosen_line);
+
+	/* Go back if the label doesn't have a value attached. we outputed an error in the first scan already.*/
+	if (chosen_line == NULL) return;
 
 	/* Determine which type this sentence is.*/
 	if (is_directive(chosen_line)) {
@@ -167,14 +173,19 @@ void add_extern_label_to_list(label* wanted_label,key_extern_label_nodes* k_reso
 void deal_with_direct_type_value(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index,int argument_number) {
 	instruction (*table)[] = &(k_resources->instruction_table); /* This will hold the instruction table. */
 
-	mila code_of_command = (*table)[index].code_of_command; /* This will hold the code of the command. */
-	mila code_of_first_additional_mila = (*table)[index].code_of_first_argument; /* This will hold the code of the first additional mila. */
-	mila code_of_second_additional_mila = (*table)[index].code_of_second_argument; /* This will hold the code of the second additional mila. */
+	mila* code_of_command = &(*table)[index].code_of_command; /* This will hold the code of the command. */
+	mila* code_of_first_additional_mila = &(*table)[index].code_of_first_argument; /* This will hold the code of the first additional mila. */
+	mila* code_of_second_additional_mila = &(*table)[index].code_of_second_argument; /* This will hold the code of the second additional mila. */
 
 	
 	char* argument = argument_number == 1 ? cur_command_sentence->first_argument : cur_command_sentence->second_argument; /* This will hold the argument. */
 	label* wanted_label = find_label_node(argument,k_resources->label_nodes); /* This will hold the label struct. */
-	if (wanted_label == NULL) return; /* If the label node is NULL, we can't do anything. */
+	/* If the label node is NULL, we can't do anything. */
+	if (wanted_label == NULL) {
+		fprintf(stderr, "The program got a label as an argument for an instruction, but the label doesn't exist at all. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
+		return;
+	} 
 
 
 	/* We need to distinguish between 2 and 1 arguments scenarios.
@@ -185,15 +196,15 @@ void deal_with_direct_type_value(instruction_sentence* cur_command_sentence,key_
 	*/
 	if (cur_command_sentence->num_of_arguments == 2) {
 		if (argument_number == 1) {
-			code_of_command.v += DIRECT << INDEX_OF_SOURCE_ADDRESING_MODE_BIT; 
-			add_machine_code_of_label(&code_of_first_additional_mila,wanted_label); 
+			(*code_of_command).v += DIRECT << INDEX_OF_SOURCE_ADDRESING_MODE_BIT; 
+			add_machine_code_of_label(code_of_first_additional_mila,wanted_label); 
 		} else if (argument_number == 2) {
-			code_of_command.v += DIRECT << INDEX_OF_TARGET_ADDRESING_MODE_BIT; 
-			add_machine_code_of_label(&code_of_second_additional_mila,wanted_label);
+			(*code_of_command).v += DIRECT << INDEX_OF_TARGET_ADDRESING_MODE_BIT; 
+			add_machine_code_of_label(code_of_second_additional_mila,wanted_label);
 		}
 	} else if (cur_command_sentence->num_of_arguments == 1) {
-		code_of_command.v += DIRECT << INDEX_OF_TARGET_ADDRESING_MODE_BIT; 
-		add_machine_code_of_label(&code_of_first_additional_mila,wanted_label); 
+		(*code_of_command).v += DIRECT << INDEX_OF_TARGET_ADDRESING_MODE_BIT; 
+		add_machine_code_of_label(code_of_first_additional_mila,wanted_label); 
 	} else {
 		return; /* If there are no arguments, do nothing */
 	}
@@ -232,17 +243,15 @@ label* find_label_node(char* label_name,key_label_nodes* k_resources) {
 		pos = pos->next;
 	}
 
-	fprintf(stderr, "The program got a label as an argument for an instruction, but the label doesn't exist at all. \n LINE: %d\n", current_line_number);
-	does_file_have_errors = true;
 	return NULL;
 }
 
 void deal_with_relative_type_value(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index,int argument_number) {
 	instruction (*table)[] = &(k_resources->instruction_table); /* This will hold the instruction table. */
 
-	mila code_of_command = (*table)[index].code_of_command; /* This will hold the code of the command. */
-	mila code_of_first_additional_mila = (*table)[index].code_of_first_argument; /* This will hold the code of the first additional mila. */
-	mila code_of_second_additional_mila = (*table)[index].code_of_second_argument; /* This will hold the code of the second additional mila. */
+	mila* code_of_command = &(*table)[index].code_of_command; /* This will hold the code of the command. */
+	mila* code_of_first_additional_mila = &(*table)[index].code_of_first_argument; /* This will hold the code of the first additional mila. */
+	mila* code_of_second_additional_mila = &(*table)[index].code_of_second_argument; /* This will hold the code of the second additional mila. */
 
 	int current_address = (*table)[index].IC; /* This will hold the current address of the instruction. We kept our IC from last scan, so it's easy to re-refrence it :D */
 
@@ -258,15 +267,15 @@ void deal_with_relative_type_value(instruction_sentence* cur_command_sentence,ke
 	*/
 	if (cur_command_sentence->num_of_arguments == 2) {
 		if (argument_number == 1) {
-			code_of_command.v += RELATIVE << INDEX_OF_SOURCE_ADDRESING_MODE_BIT; 
-			add_machine_code_of_label_relative_to(&code_of_first_additional_mila,wanted_label,current_address); 
+			(*code_of_command).v += RELATIVE << INDEX_OF_SOURCE_ADDRESING_MODE_BIT; 
+			add_machine_code_of_label_relative_to(code_of_first_additional_mila,wanted_label,current_address); 
 		} else if (argument_number == 2) {
-			code_of_command.v += RELATIVE << INDEX_OF_TARGET_ADDRESING_MODE_BIT; 
-			add_machine_code_of_label_relative_to(&code_of_second_additional_mila,wanted_label,current_address);
+			(*code_of_command).v += RELATIVE << INDEX_OF_TARGET_ADDRESING_MODE_BIT; 
+			add_machine_code_of_label_relative_to(code_of_second_additional_mila,wanted_label,current_address);
 		}
 	} else if (cur_command_sentence->num_of_arguments == 1) {
-		code_of_command.v += RELATIVE << INDEX_OF_TARGET_ADDRESING_MODE_BIT; 
-		add_machine_code_of_label_relative_to(&code_of_first_additional_mila,wanted_label,current_address); 
+		(*code_of_command).v += RELATIVE << INDEX_OF_TARGET_ADDRESING_MODE_BIT; 
+		add_machine_code_of_label_relative_to(code_of_first_additional_mila,wanted_label,current_address); 
 	} else {
 		return; /* If there are no arguments, do nothing */
 	}

@@ -3,8 +3,8 @@
 .extern W
 
 mcro APPLE
-add    #2   ,   W 
-cmp #5,#-1
+;add    #2   ,   W 
+;cmp #5,#-1
 mcroend
 
 APPLE

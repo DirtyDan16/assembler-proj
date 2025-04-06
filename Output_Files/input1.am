@@ -3,8 +3,8 @@
 .extern W
 
 
-add    #2   ,   W 
-cmp #5,#-1
+;add    #2   ,   W 
+;cmp #5,#-1
 
 MAIN: add r3, LIST
 LOOP: prn #48
@@ -21,8 +21,8 @@ LOOP: prn #48
  add L3, L3
 END: stop
 
-add    #2   ,   W 
-cmp #5,#-1
+;add    #2   ,   W 
+;cmp #5,#-1
 
 ; i am a comment that divides the instructions with the data
 

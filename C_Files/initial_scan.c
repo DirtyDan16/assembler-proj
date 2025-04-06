@@ -25,7 +25,7 @@ void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) {
 	 */
 	static char line[GEN_LENGTH_OF_STRINGS]= {0};
 
-	printf("\n\tGoing through first scan of the file!.\n");
+	printf("\n----> Going through first scan of the file!. <-----\n");
 
 	/* As long as there are more lines to read from, read the next line*/
 	while (fgets(line, GEN_LENGTH_OF_STRINGS, input_file_pointer) != NULL) {
@@ -73,7 +73,7 @@ static void go_over_read_line(char* chosen_line,key_resources* key_resources) {
 	if (has_semicolon(line_without_indentation)) return; /* If the line has a comment in the middle, skip it.*/
 
 	/* Check if the line has a label attached to it. if it has, already get the name from it in the if condition*/
-	if ((label_name = is_valid_label(line_without_indentation,key_resources->label_nodes)) != NULL) {
+	if ((label_name = is_valid_label(line_without_indentation,key_resources)) != NULL) {
 		has_label = true;
 		line_without_indentation = strchr(line_without_indentation, ' '); /* Skip to after the label*/
 		line_without_indentation = look_for_first_non_whitespace_char(line_without_indentation); /* Get the line without the whitespace that is given between the label and the rest of sentence. */
@@ -590,11 +590,7 @@ void handle_data_directive(char* data,mila* data_table) {
 	}
 }
 
-/**
- * This function checks if the line has a label attached to it.
- * If it does, it returns the label name. If it doesn't, it returns NULL.
- */
-char* is_valid_label(char* line,key_label_nodes* key_labels) {
+char* is_valid_label(char* line,key_resources* key_resources) {
 	int i;
 
 	char* label_name = NULL;
@@ -625,8 +621,15 @@ char* is_valid_label(char* line,key_label_nodes* key_labels) {
 	}
 	
 	/* Check if the label name is already defined or not*/
-	if (is_label_already_defined(label_name,key_labels)) {
+	if (is_label_already_defined(label_name,key_resources->label_nodes)) {
 		fprintf(stderr, "The label name is already defined. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
+		return NULL;
+	}
+
+	/* Check if the label is a reserved name of a macro*/
+	if (is_label_already_defined_as_macro_name(label_name,key_resources->macro_nodes)) {
+		fprintf(stderr, "The label name is already defined as a macro name. \n LINE: %d\n", current_line_number);
 		does_file_have_errors = true;
 		return NULL;
 	}
@@ -656,6 +659,22 @@ char* is_valid_label(char* line,key_label_nodes* key_labels) {
 
 	return label_name;
 }
+
+bool is_label_already_defined_as_macro_name(char* checked_name,key_macro_nodes* key_nodes) {
+	macro_node* pos = key_nodes->head_of_macro_storage;
+
+	while (pos != NULL) {
+		/* return true only if the name is a macro name*/
+		if (strcmp(checked_name,pos->val.macro_name) == 0) {
+			return true;
+		}
+
+		pos = pos->next;
+	}
+
+	return false;
+}
+
 
 bool is_directive(char* line) {
 	char* directive_name = strtok_copy(line, " ");

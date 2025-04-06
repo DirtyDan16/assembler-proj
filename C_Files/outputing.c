@@ -33,7 +33,6 @@ void create_output_files(char* input_file_name,key_resources* key_resources) {
 	strcat(object_file_name,".ob"); /* Name the output object file to the name of the assembly file we read from, and add the '.ob' suffix*/
 
 	/* Create the object file (the file which will have the machine code) and make it writeable.*/
-	printf("Opening file: %s\n", object_file_name);
 	object_file = fopen(object_file_name,"w+");
 	if (object_file == NULL) { 
 		fprintf(stderr, "The program could not create the object file. \n FILE NAME: %s\n", input_file_name);
@@ -85,11 +84,25 @@ void write_into_object_file(FILE* object_file,key_resources* key_resources) {
 	while (table[i].code_of_command.v != 0) {
 		int length_of_instruction = table[i].L; /* The length of the instruction in Milas*/
 
+		/* Print the machine code of the instruction, and the given additional info-Milas attached to it if they aren't worth to 0*/
+
 		fprintf(object_file,"%07d %06x\n",table[i].IC,table[i].code_of_command.v);
-		if (length_of_instruction >= 2) {
+		if (length_of_instruction == 2) {
+			/* 2 possibilities of this amount of length:*/
+			/*WHEN THERE'S 2 ARGUMENTS:
+			 	Check from which argument number the additional info-Mila comes from (that makes the length be bigger than 1).
+			 	situations such as registers as the argument makes the additional info-Mila be redundant. (and so not increase the L counter.)
+			  WHEN THERE'S ONLY 1 ARGUMENT:
+			  	in such case the second argument will ofc be worth to 0.
+			*/
+			if (table[i].code_of_first_argument.v != 0) {
+				fprintf(object_file,"%07d %06x\n",table[i].IC + 1,table[i].code_of_first_argument.v);
+			} else {
+				fprintf(object_file,"%07d %06x\n",table[i].IC + 1,table[i].code_of_second_argument.v);
+			}
+		/* when the length is 3, both arguments have an additional info-Mila attached to them. Print them both and account for the IC.*/
+		} else if (length_of_instruction == 3) {
 			fprintf(object_file,"%07d %06x\n",table[i].IC + 1,table[i].code_of_first_argument.v);
-		}
-		if (length_of_instruction == 3) {
 			fprintf(object_file,"%07d %06x\n",table[i].IC + 2,table[i].code_of_second_argument.v);
 		}
 		

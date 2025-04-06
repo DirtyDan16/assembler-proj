@@ -4,7 +4,7 @@
 
 ; Macro for performing a series of operations
 mcro MULTIPLY
-    add r1, r1   ;(doubling r1)
+    add r1, r1   
     add r1, r2
     cmp r1, r4
 mcroend
@@ -27,16 +27,16 @@ PROCESS: mov r3, r2
 
 MULTIPLY
 
-NEXT: mov r4, r8
-    lea X, r9
+NEXT: mov r4, r1
+    lea X, r3
     cmp r4, #-5
     bne &PROCESS
-    dec r9
+    dec r3
 
 END: stop
 
 ; Data Section
 NUMS: .data 15, -6, 33
 VAL:  .data 7
-X:    .data -1
+    .data -1
     .string "hello"

@@ -30,7 +30,8 @@ void update_all_symbols_addresses_of_type_data(int ICF,key_label_nodes* labels);
 
 bool check_if_num_of_arguments_are_valid(instruction_sentence* cur_command_sentence);
 bool is_argument_valid_for_this_specific_command(instruction_sentence* cur_command_sentence,int argument_type, int argument_number);
-char* is_valid_label(char* line,key_label_nodes* key_labels);
+char* is_valid_label(char* line,key_resources* key_resources);
+bool is_label_already_defined_as_macro_name(char* checked_name,key_macro_nodes* key_nodes);
 bool is_label_already_defined(char* label_name,key_label_nodes* key_labels);
 bool is_valid_command(char* chosen_line);
 bool is_directive(char* line);
