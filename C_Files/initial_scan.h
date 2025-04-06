@@ -11,7 +11,7 @@ void handle_directive(char* line,key_resources* key_resources);
 void handle_data_directive(char* data,mila* data_table);
 void handle_string_directive(char* string,mila data_table[]);
 char* get_string_directive_value(char* value);
-void handle_extern_directive(char *extern_name, key_label_nodes *key_resources);
+void handle_extern_directive(char *extern_name, key_resources *key_resources);
 
 static void handle_command(char* command,key_resources* key_resources);
 void add_instruction_to_table(instruction* instruction,mila binary_value_of_command,mila binary_value_for_first_argument,mila binary_value_for_second_argument,int IC,int L);
@@ -42,8 +42,7 @@ instruction_sentence* make_command_sentence_struct(char* command_line);
 
 extern int IC; /* The Instruction Counter. */
 extern int DC; /* The Data Counter. */
-#define START_OF_IC 100
-#define START_OF_DC 0
+
 
 extern int current_line_number; /* This will hold the current line number. */
 

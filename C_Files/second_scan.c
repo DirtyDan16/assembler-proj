@@ -1,6 +1,5 @@
 #include "second_scan.h"
 
-
 void second_scan(FILE* start_of_assembly_file_pointer,key_resources* k_resources) {
 	FILE* input_file_pointer = start_of_assembly_file_pointer; /* Have a tracker of which line we are corrently reading from. */
 	char line[GEN_LENGTH_OF_STRINGS]; /* This line stores each time a line from the asm file. (fgets() puts the info in it) */
@@ -45,7 +44,6 @@ static void go_over_read_line(char* chosen_line,key_resources* k_resources) {
 
 }
 
-/* TODO: reset the index between files.*/
 static void handle_command(char* command,key_resources* k_resources) {
 	 /* This will hold the index of the cur instruction we haven't went over in the instruction table, and so we get easy access to info we gathered and the machine code of the Milas.
 	 	Because we are going over the instruction table in a linear way, we are aligned with the instruction in a way that 
@@ -56,6 +54,11 @@ static void handle_command(char* command,key_resources* k_resources) {
 
 	/* This struct will be handy and convieneient since it gathers all usefull info of this sentence in a singular place! */
 	instruction_sentence* cur_command_sentence = make_command_sentence_struct(command);
+
+	
+	if (current_line_number == 1) {
+		index_in_instruction_table = 0; /* Reset the index to 0 at the start of the second scan. */
+	}
 
 	trim_the_ampersand_symbol(cur_command_sentence);
 	
@@ -95,8 +98,10 @@ static void deal_with_second_parameter(instruction_sentence* cur_command_sentenc
 	/* In the first scan, we dealt with the encoding for the immediate and register types, and now, in the second scan we'll deal with the other 2 types of arguments.*/
 	if (type_of_second_argument == DIRECT) {
 		deal_with_direct_type_value(cur_command_sentence,k_resources,index_in_instruction_table,2);
+		check_if_the_argument_is_external(cur_command_sentence->second_argument,k_resources,k_resources->instruction_table[index_in_instruction_table].IC);
 	} else if (type_of_second_argument == RELATIVE) {
 		deal_with_relative_type_value(cur_command_sentence,k_resources,index_in_instruction_table,2);
+		check_if_the_argument_is_external(cur_command_sentence->second_argument,k_resources,k_resources->instruction_table[index_in_instruction_table].IC);
 	}
 }
 
@@ -109,11 +114,50 @@ static void deal_with_first_parameter(instruction_sentence* cur_command_sentence
 	/* In the first scan, we dealt with the encoding for the immediate and register types, and now, in the second scan we'll deal with the other 2 types of arguments.*/
 	if (type_of_first_argument == DIRECT) {
 		deal_with_direct_type_value(cur_command_sentence,k_resources,index_in_instruction_table,1);
+		check_if_the_argument_is_external(cur_command_sentence->first_argument,k_resources,k_resources->instruction_table[index_in_instruction_table].IC);
 	} else if (type_of_first_argument == RELATIVE) {
 		deal_with_relative_type_value(cur_command_sentence,k_resources,index_in_instruction_table,1);
+		check_if_the_argument_is_external(cur_command_sentence->first_argument,k_resources,k_resources->instruction_table[index_in_instruction_table].IC);
 	}
 }
 
+void check_if_the_argument_is_external(char* argument,key_resources* k_resources,int IC) {
+	label* wanted_label = find_label_node(argument,k_resources->label_nodes); /* This will hold the label struct. */
+	if (wanted_label == NULL) return; /* If the label node is NULL, we can't do anything. */
+
+	/* If the label is external, we add it to the externals list. */
+	if (strcmp(wanted_label->label_type,".external") == 0) {
+		add_extern_label_to_list(wanted_label,k_resources->extern_label_nodes,IC);
+		/* Set the - 'is there any externs' flag to true.
+		We only set this flag HERE to true, since if we declared an extern without using it, it means nothing to us. */
+		k_resources->is_there_any_externs = true;
+	}
+}
+
+void add_extern_label_to_list(label* wanted_label,key_extern_label_nodes* k_resources,int IC) {
+	extern_label_node* new_extern_label_node = (extern_label_node*)malloc(sizeof(extern_label_node)); /* This will hold the new extern label node. */
+	if (new_extern_label_node == NULL) {
+		fprintf(stderr, "Memory allocation failed.\n");
+		exit(1);
+	}
+
+	new_extern_label_node->val.label_name = strdup(wanted_label->label_name); /* Allocate memory for the label name and copy it. */
+	if (new_extern_label_node->val.label_name == NULL) {
+		fprintf(stderr, "Memory allocation failed.\n");
+		exit(1);
+	}
+	new_extern_label_node->val.label_address = IC; /* Set the address of the label to the current instruction counter. */
+
+	new_extern_label_node->next = NULL; /* Set the next pointer to NULL. */
+
+	if (k_resources->head_of_extern_label_storage == NULL) {
+		k_resources->head_of_extern_label_storage = new_extern_label_node; /* Set the head of the extern label storage to the new extern label node. */
+		k_resources->last_extern_label_node = new_extern_label_node; /* Set the last extern label node to the new extern label node. */
+	} else {
+		k_resources->last_extern_label_node->next = new_extern_label_node; /* Add the new extern label node to the end of the list. */
+		k_resources->last_extern_label_node = new_extern_label_node; /* Update the last extern label node to be the new extern label node. */
+	}
+}
 
 void deal_with_direct_type_value(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index,int argument_number) {
 	instruction (*table)[] = &(k_resources->instruction_table); /* This will hold the instruction table. */
@@ -152,17 +196,18 @@ void deal_with_direct_type_value(instruction_sentence* cur_command_sentence,key_
 
 
 void add_machine_code_of_label(mila* ptr_to_mila,label* label) {
-	/* Add the address of the label to the mila. */
-	(*ptr_to_mila).v += label->label_address << INDEX_OF_THE_BIT_AFTER_A;
-
-	/* Now we want to change the A.R.E fields correctly.*/
+	/* we want to change the A.R.E fields correctly.*/
 
 	/* If the label is external, we set the E (external) bit to 1, and the others we keep at 0 */
 	if (strcmp(label->label_type,".external") == 0) {
 		(*ptr_to_mila).v += 1 << INDEX_OF_THE_E_BIT;
+
+		/* ~~~An external's address doesn't mean anything in the same source file, so we won't add its address~~~ (keeping it 0)*/
 	/* Otherwise, we set the R (relative) bit to 1, and the other two keep at 0*/
 	} else {
 		(*ptr_to_mila).v += 1 << INDEX_OF_THE_R_BIT;
+		/* Add the address of the label to the mila. */
+		(*ptr_to_mila).v += label->label_address << INDEX_OF_THE_BIT_AFTER_A;
 	}
 }
 

@@ -474,7 +474,7 @@ void handle_directive(char* line,key_resources* key_resources) {
 	} else if (strcmp(directive_name, ".entry") == 0) {
 		/* This is a placeholder for now. We will handle the entry directive in the second scan */
 	} else if (strcmp(directive_name, ".extern") == 0) {
-		handle_extern_directive(directive_value,key_resources->label_nodes);
+		handle_extern_directive(directive_value,key_resources);
 	} else {
 		fprintf(stderr, "Unknown directive. \n LINE: %d\n", current_line_number);
 		does_file_have_errors = true;
@@ -482,14 +482,14 @@ void handle_directive(char* line,key_resources* key_resources) {
 	
 }
 
-void handle_extern_directive(char* extern_name,key_label_nodes* key_resources) {
+void handle_extern_directive(char* extern_name,key_resources* key_resources) {
 	trim_whitespace(extern_name); /* Get rid of any whitespace surrounding the extern name*/
 	if (extern_name == NULL) {
 		fprintf(stderr, "Extern directive is missing a value.\n LINE: %d\n", current_line_number);
 		does_file_have_errors = true;
 		return;
 	}
-	add_label_to_table(extern_name,0,".external",key_resources); /* Add the label name to the table*/
+	add_label_to_table(extern_name,IC,".external",key_resources->label_nodes); /* Add the label name to the table*/
 }
 
 

@@ -16,6 +16,9 @@ static void handle_command(char* command,key_resources* key_resources);
 static void deal_with_first_parameter(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index_in_instruction_table);
 static void deal_with_second_parameter(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index_in_instruction_table);
 
+void check_if_the_argument_is_external(char* argument,key_resources* k_resources,int IC);
+void add_extern_label_to_list(label* wanted_label,key_extern_label_nodes* k_resources,int IC); 
+
 void deal_with_direct_type_value(instruction_sentence* cur_command_sentence,key_resources* k_resources,int argument_number,int index_in_instruction_table);
 label* find_label_node(char* label_name,key_label_nodes* k_resources) ;
 void add_machine_code_of_label(mila* the_mila,label* label);
