@@ -30,11 +30,13 @@ void update_all_symbols_addresses_of_type_data(int ICF,key_label_nodes* labels);
 
 bool check_if_num_of_arguments_are_valid(instruction_sentence* cur_command_sentence);
 bool is_argument_valid_for_this_specific_command(instruction_sentence* cur_command_sentence,int argument_type, int argument_number);
-char* is_valid_label(char* line);
+char* is_valid_label(char* line,key_label_nodes* key_labels);
+bool is_label_already_defined(char* label_name,key_label_nodes* key_labels);
 bool is_valid_command(char* chosen_line);
 bool is_directive(char* line);
 bool is_empty(char* line);
 bool is_comment(char* line);
+bool has_semicolon(char* line);
 
 instruction_sentence* make_command_sentence_struct(char* command_line);
 
@@ -46,3 +48,11 @@ extern int DC; /* The Data Counter. */
 extern int current_line_number; /* This will hold the current line number. */
 
 const char* registers[] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};
+
+char* list_of_reserved_words[] = {
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+    "mcro", "mcroend",
+    "mov", "cmp", "add", "sub", "lea", "clr", "not", "inc", "dec",
+    "jmp", "bne", "jsr", "red", "prn", "rts", "stop",
+    ".data", ".string", ".entry", ".extern"
+};

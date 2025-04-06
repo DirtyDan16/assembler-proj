@@ -64,8 +64,10 @@ static void go_over_read_line(char* chosen_line,key_resources* key_resources) {
 	/* If the line is empty or a comment, skip it*/
 	if (is_empty(chosen_line) || is_comment(line_without_indentation)) return;
 
+	if (has_semicolon(line_without_indentation)) return; /* If the line has a comment in the middle, skip it.*/
+
 	/* Check if the line has a label attached to it. if it has, already get the name from it in the if condition*/
-	if ((label_name = is_valid_label(line_without_indentation)) != NULL) {
+	if ((label_name = is_valid_label(line_without_indentation,key_resources->label_nodes)) != NULL) {
 		has_label = true;
 		line_without_indentation = strchr(line_without_indentation, ' '); /* Skip to after the label*/
 		line_without_indentation = look_for_first_non_whitespace_char(line_without_indentation); /* Get the line without the whitespace that is given between the label and the rest of sentence. */
@@ -586,8 +588,9 @@ void handle_data_directive(char* data,mila* data_table) {
  * This function checks if the line has a label attached to it.
  * If it does, it returns the label name. If it doesn't, it returns NULL.
  */
-/* TODO: check if the label NAME is valid or not.*/
-char* is_valid_label(char* line) {
+char* is_valid_label(char* line,key_label_nodes* key_labels) {
+	int i;
+
 	char* label_name = NULL;
 
 	/* Check if the line has a label identifier (:). If it doesn't, return NULL */
@@ -600,10 +603,50 @@ char* is_valid_label(char* line) {
 		Note that we use strtok_copy() to get the label name because strtok() changes the string it's working on.
 	*/
 	label_name = strtok_copy(line, ":");
-
 	if (label_name == NULL) {
 		return NULL;
 	}
+
+	/*----------------------------------------------------------------------------------------------------------------------------------------*/
+
+	/* Check if the label name is a reserved word (like an instruction name)*/
+	for (i = 0; i < NUM_OF_RESERVED_WORDS; i++) {
+		if (strcmp(label_name, list_of_reserved_words[i]) == 0) {
+			fprintf(stderr, "The label name is a reserved word. \n LINE: %d\n", current_line_number);
+			does_file_have_errors = true;
+			return NULL;
+		}
+	}
+	
+	/* Check if the label name is already defined or not*/
+	if (is_label_already_defined(label_name,key_labels)) {
+		fprintf(stderr, "The label name is already defined. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
+		return NULL;
+	}
+
+	/* Check if the label name is too long*/
+	if (strlen(label_name) > MAX_LENGTH_OF_LABEL) {
+		fprintf(stderr, "The label name is too long. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
+		return NULL;
+	}
+
+	/* Check if the label name is valid (only contains alphanumeric characters and numbers)*/
+	if (!isalpha(label_name[0])) {
+		fprintf(stderr, "The label name is invalid. It must start with a letter. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
+		return NULL;
+	}
+	for (i = 1; i < strlen(label_name); i++) {
+		if (!isalnum(label_name[i])) {
+			fprintf(stderr, "The label name is invalid. It must only contain letters and numbers. \n LINE: %d\n", current_line_number);
+			does_file_have_errors = true;
+			return NULL;
+		}
+	}
+
+	/*------------------------------------------------------------------------------------------------------------------------------------------*/
 
 	return label_name;
 }
@@ -621,6 +664,18 @@ bool is_directive(char* line) {
 	}
 
 	return false;
+}
+
+bool is_label_already_defined(char* label_name,key_label_nodes* key_resources) {
+	label_node* pos = key_resources->head_of_label_storage;
+
+	while (pos != NULL) {
+		if (strcmp(pos->val.label_name, label_name) == 0) {
+			return true; /* Label already defined */
+		}
+		pos = pos->next;
+	}
+	return false; /* Label not defined */
 }
 
 void add_label_to_table(char* label_name,int label_address, char* type,key_label_nodes* key_resources) {
@@ -676,5 +731,16 @@ bool is_empty(char* line) {
 /* checks if this Sentence is a comment or not and return a boolean val accordingly*/
 bool is_comment(char* line) {
 	return line[0] == ';';
+}
+
+bool has_semicolon(char* line) {
+	line++; /*skip the intended semi-colon if it is there*/
+	if (strchr(line, ';') != NULL) {
+		fprintf(stderr, "The program got a sentence with a comment in the middle of it. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
+		return true;
+	}
+
+	return false;
 }
 

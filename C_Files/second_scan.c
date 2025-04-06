@@ -22,6 +22,8 @@ static void go_over_read_line(char* chosen_line,key_resources* k_resources) {
 	/* If the line is empty or a comment, skip it*/
 	if (is_empty(chosen_line) || is_comment(chosen_line)) return;
 
+	if (has_semicolon(chosen_line)) return; /* If the line has a comment in the middle, skip it.*/
+
 	chosen_line = look_for_first_non_whitespace_char(chosen_line); /* This will hold the line without indentation. Will be used to get the raw value of the line so we can compare correctly with certain keywords. */
 	chosen_line = skip_label_name(chosen_line);
 

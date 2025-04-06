@@ -26,6 +26,7 @@ void add_machine_code_of_label_relative_to(mila* ptr_to_mila,label* label,int ad
 /*created from a different file (particularly from the first scan file, since some stuff between the two tasks are similar)*/
 bool is_empty(char* line);
 bool is_comment(char* line);
+bool has_semicolon(char* line);
 bool is_valid_command(char* chosen_line);
 bool is_directive(char* line);
 

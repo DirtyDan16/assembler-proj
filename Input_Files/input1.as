@@ -1,9 +1,9 @@
-; file ps.as
+; file this is an input1 file!
 .entry LIST
 .extern W
 
 mcro APPLE
-add    #2   ,   SUS
+add    #2   ,   W
 cmp #5,#-1
 mcroend
 
@@ -25,6 +25,8 @@ LOOP: prn #48
 END: stop
 
 APPLE
+
+; i am a comment that divides the instructions with the data
 
 STR: .string "abcd"
 LIST: .data 6, -9

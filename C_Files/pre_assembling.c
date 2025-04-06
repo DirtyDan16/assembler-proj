@@ -198,14 +198,6 @@ bool add_a_macro_node_to_list(char* found_macro_name,key_macro_nodes* key_nodes)
 }
 
 bool is_valid_macro_name(char* macro_name) {
-	char* list_of_invalid_macro_names[] = {
-		 "mcro", "mcroend",
-		 "mov", "cmp", "add", "sub", "lea", "clr", "not", "inc", "dec",
-		 "jmp", "bne", "jsr", "red", "prn", "rts", "stop",
-		 ".data", ".string", ".entry", ".extern"
-	};
-
-	
 	int i;
 
 	if (macro_name == NULL) {
@@ -214,8 +206,8 @@ bool is_valid_macro_name(char* macro_name) {
 	}
 
 	/* Check if the macro name is one of the invalid names */
-	for (i = 0; i < sizeof(list_of_invalid_macro_names) / sizeof(list_of_invalid_macro_names[0]); i++) {
-		if (strcmp(macro_name, list_of_invalid_macro_names[i]) == 0) {
+	for (i = 0; i < NUM_OF_RESERVED_WORDS; i++) {
+		if (strcmp(macro_name, list_of_reserved_words[i]) == 0) {
 			fprintf(stderr, "A macro name can't be a kept keyword \n LINE: %d\n", current_line_number);
 			return false;
 		}

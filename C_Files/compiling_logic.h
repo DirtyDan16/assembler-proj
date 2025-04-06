@@ -28,13 +28,8 @@ static const instruction_machine_code_rep instructions_machine_code_rep[] = {
     {"stop", 15, 0}
 };
 
-/*
- ASM Command values in an array format.
-
-const int list_of_opcode_numbers[] = {0,1,2,4,5,9,12,13,14,15};
-const int list_of_funct_numbers[] = {1,2,3,4};
-*/
-
+/* List of reserved words in the assembly language. These are not valid names for labels or macros. */
+extern char* list_of_reserved_words[];
 
 /* The different addressing modes that the operands can have */
 enum addressing_mode {
@@ -112,5 +107,7 @@ static const int num_of_arguments_each_command_has[16] = {2,2,2,2,2,1,1,1,1,1,1,
 
 
 #define MAX_LENGTH_OF_LABEL 31
+
+#define NUM_OF_RESERVED_WORDS 32
 
 #endif
