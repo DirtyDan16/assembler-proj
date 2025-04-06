@@ -43,4 +43,6 @@ extern int DC; /* The Data Counter. */
 #define START_OF_IC 100
 #define START_OF_DC 0
 
+extern int current_line_number; /* This will hold the current line number. */
+
 const char* registers[] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"};

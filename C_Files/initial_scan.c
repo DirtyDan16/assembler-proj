@@ -3,7 +3,7 @@
 int IC = START_OF_IC; /* The Instruction Counter. */
 int DC = START_OF_DC; /* The Data Counter. */
 
-static int current_line_number = 1; /* Tracks the current line number for error reporting */
+int current_line_number = 1; /* Tracks the current line number for error reporting */
 /* Why this is ok as a global variable? 
 This is acceptable because the 'current_line_number' is a shared resource that needs to be accessed and updated across multiple functions 
 during the processing of the file. Making it global avoids the need to pass it as a parameter to every function, simplifying the code. 
@@ -15,8 +15,15 @@ bool does_file_have_errors = false; /* This variable is used to check if the fil
 
 void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) { 
 	FILE* input_file_pointer = start_of_am_file_pointer; /* Have a tracker of which line we are corrently reading from. */
-	char line[GEN_LENGTH_OF_STRINGS]= {0}; /* This line stores each time a line from the asm file. (fgets() puts the info in it) */
+	 /* This line stores each time a line from the asm file. (fgets() puts the info in it)
 
+	 	Previously, this was a local (non-static) array, so its stack memory
+		could be reclaimed and reused by malloc(). That led to two pointers 
+		referencing the same memory.
+
+		Making it static ensures the memory remains valid and is not overwritten.
+	 */
+	static char line[GEN_LENGTH_OF_STRINGS]= {0};
 	printf("\n\tGoing through first scan of the file!.\n");
 	/* As long as there are more lines to read from, read the next line*/
 	while (fgets(line, GEN_LENGTH_OF_STRINGS, input_file_pointer) != NULL) {
@@ -474,6 +481,12 @@ void handle_directive(char* line,key_resources* key_resources) {
 }
 
 void handle_extern_directive(char* extern_name,key_label_nodes* key_resources) {
+	trim_whitespace(extern_name); /* Get rid of any whitespace surrounding the extern name*/
+	if (extern_name == NULL) {
+		fprintf(stderr, "Extern directive is missing a value.\n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
+		return;
+	}
 	add_label_to_table(extern_name,0,".external",key_resources); /* Add the label name to the table*/
 }
 
@@ -614,16 +627,12 @@ void add_label_to_table(char* label_name,int label_address, char* type,key_label
 	label new_label;
 	label_node* new_label_node;
 
-	/* Allocate memory for the new label name */
-	new_label.label_name = (char*)malloc(strlen(label_name) + 1);
-
+	/* Give the label its name, address, and type */
+	new_label.label_name = strdup(label_name);
 	if (new_label.label_name == NULL) {
 		fprintf(stderr, "Memory allocation failed. A Label has not managed to be added to table of Labels.\n");
 		exit(1);
 	}
-
-	/* Give the label its name, address, and type */
-	new_label.label_name = label_name;
 	new_label.label_address = label_address;
 	new_label.label_type = type;
 	new_label.is_entry = false; /* Set the is_entry flag to false by default */
@@ -641,7 +650,6 @@ void add_label_to_table(char* label_name,int label_address, char* type,key_label
 
 	/* If the table is empty, make the new label node the head and tail of the table */
 	if (key_resources->head_of_label_storage == NULL) {
-		key_resources->head_of_label_storage = new_label_node;
 		key_resources->head_of_label_storage = new_label_node;
 		key_resources->last_label_node = new_label_node;
 	} else {

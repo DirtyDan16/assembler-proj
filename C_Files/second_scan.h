@@ -10,6 +10,8 @@ void handle_entry_directive(char* entry_sentence,key_resources* k_resources);
 void look_for_label_in_table_for_entries(char* label_name,key_resources* k_resources);
 char* skip_label_name(char* line);
 
+void trim_the_ampersand_symbol(instruction_sentence* cur_command_sentence);
+
 static void handle_command(char* command,key_resources* key_resources);
 static void deal_with_first_parameter(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index_in_instruction_table);
 static void deal_with_second_parameter(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index_in_instruction_table);
@@ -32,3 +34,7 @@ int determine_type_of_asm_argument(char *argument);
 
 
 instruction_sentence* make_command_sentence_struct(char* command_line);
+
+
+
+extern int current_line_number; /* This will hold the current line number. */

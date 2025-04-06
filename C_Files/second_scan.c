@@ -1,6 +1,5 @@
 #include "second_scan.h"
 
-static int current_line_number = 1; /* Tracks the current line number for error reporting */
 
 void second_scan(FILE* start_of_assembly_file_pointer,key_resources* k_resources) {
 	FILE* input_file_pointer = start_of_assembly_file_pointer; /* Have a tracker of which line we are corrently reading from. */
@@ -12,6 +11,8 @@ void second_scan(FILE* start_of_assembly_file_pointer,key_resources* k_resources
 		go_over_read_line(line,k_resources);
 		current_line_number++; /* Increment the line number*/
 	}
+
+	current_line_number = 1; /* Reset the line number */
 
 }
 
@@ -42,6 +43,7 @@ static void go_over_read_line(char* chosen_line,key_resources* k_resources) {
 
 }
 
+/* TODO: reset the index between files.*/
 static void handle_command(char* command,key_resources* k_resources) {
 	 /* This will hold the index of the cur instruction we haven't went over in the instruction table, and so we get easy access to info we gathered and the machine code of the Milas.
 	 	Because we are going over the instruction table in a linear way, we are aligned with the instruction in a way that 
@@ -52,6 +54,9 @@ static void handle_command(char* command,key_resources* k_resources) {
 
 	/* This struct will be handy and convieneient since it gathers all usefull info of this sentence in a singular place! */
 	instruction_sentence* cur_command_sentence = make_command_sentence_struct(command);
+
+	trim_the_ampersand_symbol(cur_command_sentence);
+	
 
 	/* If there are arguments added alongside the instruction, deal with the Machine Code they give appropriately.*/
 	if (cur_command_sentence->first_argument != NULL) {
@@ -66,6 +71,18 @@ static void handle_command(char* command,key_resources* k_resources) {
 	index_in_instruction_table++;
 }
 
+void trim_the_ampersand_symbol(instruction_sentence* cur_command_sentence) {
+	if (cur_command_sentence->first_argument != NULL) {
+		if (cur_command_sentence->first_argument[0] == '&') {
+			cur_command_sentence->first_argument++;
+		}
+	}
+	if (cur_command_sentence->second_argument != NULL) {
+		if (cur_command_sentence->second_argument[0] == '&') {
+			cur_command_sentence->second_argument++;
+		}
+	}
+}
 
 static void deal_with_second_parameter(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index_in_instruction_table) {
 	int type_of_second_argument = determine_type_of_asm_argument(cur_command_sentence->second_argument); /* Determine the type of the first argument*/
@@ -259,14 +276,13 @@ void look_for_label_in_table_for_entries(char* label_name,key_resources* k_resou
 
 char* skip_label_name(char* line) {
 	char* ptr = strchr(line, ':');
-
 	/* If we haven't found ":", there aint a label, so we return the whole string.*/
 	if (ptr == NULL) {
 		return line;
 	}
-
+	/* If we found ":", we need to skip it and the whitespace that comes after it. */
+	ptr++;
 	ptr = look_for_first_non_whitespace_char(ptr);
-
 	return ptr;
 }
 
