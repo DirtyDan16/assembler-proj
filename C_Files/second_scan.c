@@ -28,7 +28,7 @@ static void go_over_read_line(char* chosen_line,key_resources* k_resources) {
 
 	/* Determine which type this sentence is.*/
 	if (is_directive(chosen_line)) {
-		directive_type = strtok(strdup(chosen_line),"");
+		directive_type = strtok(strdup(chosen_line)," ");
 		if (strcmp(directive_type, ".entry") == 0) {
 			handle_entry_directive(chosen_line,k_resources);
 		} else {
@@ -96,14 +96,17 @@ static void deal_with_second_parameter(instruction_sentence* cur_command_sentenc
 
 
 	/* In the first scan, we dealt with the encoding for the immediate and register types, and now, in the second scan we'll deal with the other 2 types of arguments.*/
-	if (type_of_second_argument == DIRECT) {
-		deal_with_direct_type_value(cur_command_sentence,k_resources,index_in_instruction_table,2);
-		check_if_the_argument_is_external(cur_command_sentence->second_argument,k_resources,k_resources->instruction_table[index_in_instruction_table].IC);
-	} else if (type_of_second_argument == RELATIVE) {
+	if (type_of_second_argument == DIRECT || type_of_second_argument == RELATIVE) {
+		if (type_of_second_argument == DIRECT) {
+			deal_with_direct_type_value(cur_command_sentence,k_resources,index_in_instruction_table,2);
+		} else if (type_of_second_argument == RELATIVE) {
 		deal_with_relative_type_value(cur_command_sentence,k_resources,index_in_instruction_table,2);
-		check_if_the_argument_is_external(cur_command_sentence->second_argument,k_resources,k_resources->instruction_table[index_in_instruction_table].IC);
+		}
+		/* If the argument is external, add it to the list of externals (for the ext file). The place of the argument (1st or 2nd) is being accounted for the IC*/
+		check_if_the_argument_is_external(cur_command_sentence->second_argument,k_resources,k_resources->instruction_table[index_in_instruction_table].IC + 2);
 	}
 }
+
 
 static void deal_with_first_parameter(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index_in_instruction_table) {
 	int type_of_first_argument = determine_type_of_asm_argument(cur_command_sentence->first_argument); /* Determine the type of the first argument*/
@@ -112,12 +115,14 @@ static void deal_with_first_parameter(instruction_sentence* cur_command_sentence
 
 
 	/* In the first scan, we dealt with the encoding for the immediate and register types, and now, in the second scan we'll deal with the other 2 types of arguments.*/
-	if (type_of_first_argument == DIRECT) {
-		deal_with_direct_type_value(cur_command_sentence,k_resources,index_in_instruction_table,1);
-		check_if_the_argument_is_external(cur_command_sentence->first_argument,k_resources,k_resources->instruction_table[index_in_instruction_table].IC);
-	} else if (type_of_first_argument == RELATIVE) {
+	if (type_of_first_argument == DIRECT || type_of_first_argument == RELATIVE) {
+		if (type_of_first_argument == DIRECT) {
+			deal_with_direct_type_value(cur_command_sentence,k_resources,index_in_instruction_table,1);
+		} else if (type_of_first_argument == RELATIVE) {
 		deal_with_relative_type_value(cur_command_sentence,k_resources,index_in_instruction_table,1);
-		check_if_the_argument_is_external(cur_command_sentence->first_argument,k_resources,k_resources->instruction_table[index_in_instruction_table].IC);
+		}
+		/* If the argument is external, add it to the list of externals (for the ext file).  The place of the argument (1st or 2nd) is being accounted for the IC*/
+		check_if_the_argument_is_external(cur_command_sentence->first_argument,k_resources,k_resources->instruction_table[index_in_instruction_table].IC + 1);
 	}
 }
 
@@ -282,16 +287,19 @@ void add_machine_code_of_label_relative_to(mila* ptr_to_mila,label* label,int ad
 void handle_entry_directive(char* entry_sentence,key_resources* k_resources) {
 	char* entry_value = NULL; /* This will hold the value of the entry directive. */
 	
-	entry_value = strtok(entry_sentence, " ");
+	strtok(entry_sentence, " ");
+	entry_value = strtok(NULL, " ");
 	
 
 	entry_value = trim_whitespace(entry_value);
+	replace_char_with_null(entry_value,'\n');
 
 	if (entry_value == NULL) {
 		fprintf(stderr, "Entry directive is missing a value. \n LINE: %d\n", current_line_number);
 		return;
 	}
-	look_for_label_in_table_for_entries(entry_value,k_resources); /* This will look for the label in the label table. */
+	/* This will look for the label in the label table. If we concluded that the label is not in the table (in other words, an entry that isn't defined in the file), we'll output an error */
+	look_for_label_in_table_for_entries(entry_value,k_resources); 
 
 }
 
@@ -302,7 +310,7 @@ void look_for_label_in_table_for_entries(char* label_name,key_resources* k_resou
 	label_node* pos = NULL;
 	
 	if (key_labels == NULL) {
-		fprintf(stderr, "Entry directive has a value that doesn't exist in the label table. \n LINE: %d\n", current_line_number);
+		fprintf(stderr, "Entry directive is defined but doesn't exist in the file. There are no labels defined at all for the matter. \n LINE: %d\n", current_line_number);
 		return;
 	}
 
@@ -317,7 +325,7 @@ void look_for_label_in_table_for_entries(char* label_name,key_resources* k_resou
 		pos = pos->next;
 	}
 
-	fprintf(stderr, "Entry directive has a value that doesn't exist in the label table. \n LINE: %d\n", current_line_number);
+	fprintf(stderr, "Entry directive is defined but doesn't exist in the file. \n LINE: %d\n", current_line_number);
 
 }	
 

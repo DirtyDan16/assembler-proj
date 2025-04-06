@@ -24,7 +24,9 @@ void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) {
 		Making it static ensures the memory remains valid and is not overwritten.
 	 */
 	static char line[GEN_LENGTH_OF_STRINGS]= {0};
+
 	printf("\n\tGoing through first scan of the file!.\n");
+
 	/* As long as there are more lines to read from, read the next line*/
 	while (fgets(line, GEN_LENGTH_OF_STRINGS, input_file_pointer) != NULL) {
 		go_over_read_line(line,key_resources);
@@ -34,6 +36,10 @@ void initial_scan(FILE* start_of_am_file_pointer,key_resources* key_resources) {
 	/* Save the final values of IC and DC. will be used for the object file.*/
 	key_resources->ICF = IC;
 	key_resources->DCF = DC;
+
+	/*Reset the IC and DC*/
+	IC = START_OF_IC;
+	DC = START_OF_DC;
 
 	update_all_symbols_addresses_of_type_data(key_resources->ICF,key_resources->label_nodes);
 
@@ -489,7 +495,7 @@ void handle_extern_directive(char* extern_name,key_resources* key_resources) {
 		does_file_have_errors = true;
 		return;
 	}
-	add_label_to_table(extern_name,IC,".external",key_resources->label_nodes); /* Add the label name to the table*/
+	add_label_to_table(extern_name,0,".external",key_resources->label_nodes); /* Add the label name to the table*/
 }
 
 
