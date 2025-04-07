@@ -72,12 +72,17 @@ static void go_over_read_line(char* chosen_line,key_resources* key_resources) {
 
 	if (has_semicolon(line_without_indentation)) return; /* If the line has a comment in the middle, skip it.*/
 
-	/* Check if the line has a label attached to it. if it has, already get the name from it in the if condition*/
-	if ((label_name = is_valid_label(line_without_indentation,key_resources)) != NULL) {
-		has_label = true;
-		line_without_indentation = strchr(line_without_indentation, ' '); /* Skip to after the label*/
-		line_without_indentation = look_for_first_non_whitespace_char(line_without_indentation); /* Get the line without the whitespace that is given between the label and the rest of sentence. */
 
+	
+	/* Check if the line has a label attached to it. if it has, already get the name from it.*/
+	if ((label_name = is_valid_label(line_without_indentation,key_resources)) != NULL) {
+		has_label = true;		
+	}
+
+	/* Skip to after the label*/
+	if (strchr(line_without_indentation, ':') != NULL ) {
+		line_without_indentation = strchr(line_without_indentation,':') + 1;
+		line_without_indentation = look_for_first_non_whitespace_char(line_without_indentation); /* Get the line without the whitespace that is given between the label and the rest of sentence. */
 		if (line_without_indentation == NULL) {
 			fprintf(stderr, "There's a Label without a command or directive. \n LINE: %d\n", current_line_number);
 			does_file_have_errors = true; 
@@ -555,18 +560,23 @@ char* get_string_directive_value(char* value) {
 }
 
 void handle_data_directive(char* data,mila* data_table) {
-	char* bit_of_data = strtok(data, ",");
-	int numeric_val_of_data;
+	char* bit_of_data;
 	 
-	if (bit_of_data == NULL) {
-		fprintf(stderr, "Data directive is missing a value.\n LINE: %d\n", current_line_number);
-		does_file_have_errors = true;
+	 if (!has_good_structure_for_data_directive_sentence(data)) {
 		return;
-	}
+	 }
+	 
+
+	 bit_of_data = strtok(data,",");
+
 
 	/* As long as there are more data values to read from, read the next data value*/
 	while (bit_of_data != NULL) {
-		numeric_val_of_data = atoi(bit_of_data);
+		int numeric_val_of_data = atoi(bit_of_data);
+		if (numeric_val_of_data == 0 && strchr(bit_of_data,'0') == NULL) {
+			fprintf(stderr,"Data directive has a value that can't be parsed into a number at all.\n LINE: %d", current_line_number);
+			return;
+		}
 
 		if (numeric_val_of_data < MIN_NUMERIC_VALUE_FOR_DATA_IN_DATA_DIRECTIVE ) {
 			fprintf(stderr, "Data directive has a value that's smaller then the smallest valid number: -(2^23-1).\n LINE: %d\n", current_line_number);
@@ -582,12 +592,64 @@ void handle_data_directive(char* data,mila* data_table) {
 
 		DC++; /* Increment the Data Counter */
 		bit_of_data = strtok(NULL, ","); /* Get the next data value */
-
-		if (bit_of_data != NULL && is_empty(bit_of_data)) {
-			fprintf(stderr, "Data directive is missing a value after a comma.\n LINE: %d\n", current_line_number);
-			does_file_have_errors = true;
-		}
 	}
+}
+
+bool has_good_structure_for_data_directive_sentence(char* data_sentence) {
+    char *ptr = data_sentence;
+
+
+	if (data_sentence == NULL) {
+        fprintf(stderr, "Data directive is missing a value.\nLINE: %d\n", current_line_number);
+        does_file_have_errors = true;
+        return false;
+    }
+
+
+    while (*ptr != '\0') {
+
+        /* Skip any leading whitespace */
+        while (isspace(*ptr)) {
+			ptr++;
+		}
+
+        /* Handle optional minus sign for negative numbers */
+        if (*ptr == '-') {
+            ptr++;
+        }
+
+        /* Ensure there's at least one digit after optional '-' */
+        if (!isdigit(*ptr)) {
+            fprintf(stderr, "Expected a number in data directive. are there any excess commas?\nLINE: %d\n", current_line_number);
+            does_file_have_errors = true;
+            return false;
+        }
+
+        /* Consume the full numeric part */
+        while (isdigit(*ptr)) {
+            ptr++;
+        }
+
+        /* Skip trailing whitespace after number */
+        while (isspace(*ptr)) {
+            ptr++;
+        }
+
+        /* If a comma follows, move to next number */
+        if (*ptr == ',') {
+         	ptr++;
+		/* If we reached the end of string, structure is valid so far */	
+        } else if (*ptr == '\0') {
+            break;
+        } else {
+        /* If it's any other character, it's invalid */
+            fprintf(stderr, "Invalid character in data directive.\nLINE: %d\n", current_line_number);
+            does_file_have_errors = true;
+            return false;
+        }
+    }
+
+    return true;
 }
 
 char* is_valid_label(char* line,key_resources* key_resources) {
@@ -686,6 +748,10 @@ bool is_directive(char* line) {
 	/* Check if the directive name is one of the known directives*/
 	if (strcmp(directive_name, ".data") == 0 || strcmp(directive_name, ".string") == 0 || strcmp(directive_name, ".entry") == 0 || strcmp(directive_name, ".extern") == 0) {
 		return true;
+	}
+
+	if (directive_name[0] == '.') {
+		fprintf(stderr,"Got invalid directive type (line starts with '.').");
 	}
 
 	return false;

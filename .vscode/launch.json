@@ -9,7 +9,8 @@
       "args": [
         "input1.as",
         "input2.as",
-        "invalid1.as"
+        "invalid1.as",
+        "invalid2.as"
       ],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",

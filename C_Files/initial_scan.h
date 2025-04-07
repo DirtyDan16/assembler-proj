@@ -35,6 +35,7 @@ bool is_label_already_defined_as_macro_name(char* checked_name,key_macro_nodes* 
 bool is_label_already_defined(char* label_name,key_label_nodes* key_labels);
 bool is_valid_command(char* chosen_line);
 bool is_directive(char* line);
+bool has_good_structure_for_data_directive_sentence(char* data_sentence);
 bool is_empty(char* line);
 bool is_comment(char* line);
 bool has_semicolon(char* line);
