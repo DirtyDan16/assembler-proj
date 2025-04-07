@@ -1,5 +1,14 @@
 #include "assembler.h"
 
+/**
+ * The Main program.
+ * Takes as arguments file names to be compiled. 
+ * Goes over file by file, into the pre-assembling stage, the first-scan stage and the second-scan stage.
+ * 
+ * If no errors were detected in the process of gathering info about the file, the output files will be outputed accordingly.
+ * 
+ * returns 0 if it finished the excecution without exciting in the middle.
+ */
 int main(int argc, char *argv[]) {
 	FILE *assembly_file_pointer; /* Pointer for the input file */
 	char* assembly_file_name;
@@ -77,19 +86,24 @@ key_resources* init_data_structures() {
 		exit(1);
 	}
 	
+	/* Macros*/
 	resources->macro_nodes->head_of_macro_storage = NULL;
 	resources->macro_nodes->cur_macro_node = NULL;
 	resources->macro_nodes->last_macro_node = NULL;
 	
+	/* Labels*/
 	resources->label_nodes->head_of_label_storage = NULL;
 	resources->label_nodes->last_label_node = NULL;
 
+	/* Extern Labels*/
 	resources->extern_label_nodes->head_of_extern_label_storage = NULL;
 	resources->extern_label_nodes->last_extern_label_node = NULL;
 
+	/* Instruction Table*/
 	memset(&resources->instruction_table, 0, sizeof(resources->instruction_table));
 	resources->index_of_instruction_table = 0; /* The index of the first free space of the instruction table. starts at 0, and grows by 1 each time an instruction is added. */
 
+	/* Data Table*/
     memset(&resources->data_table, 0, sizeof(resources->data_table));
 
 	resources->ICF = START_OF_IC; /* The instruction counter. This is the address of the next instruction to be added. */

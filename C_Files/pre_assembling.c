@@ -25,9 +25,9 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,
 
 		/* Check the state of the program, and act accordingly. */
 		if (strcmp(state,"OUTSIDE") == 0) {
-			state = outside_macro_declaration(line,am_file,state,key_nodes);
+			state = outside_macro_declaration(line,am_file,key_nodes);
 		} else if (strcmp(state,"INSIDE_MACRO_DECLARATION") == 0) {
-			state = inside_macro_declaration_state(line,am_file,state,key_nodes);
+			state = inside_macro_declaration_state(line,am_file,key_nodes);
 		}
 
 
@@ -49,14 +49,14 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,
 }
 
 
-char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_nodes* key_nodes) {
+char* outside_macro_declaration(char* line,FILE* am_file,key_macro_nodes* key_nodes) {
 	char* ptr_to_remaining_of_macro_line=NULL; /* If we find a mcro declaration, this will hold the macro name that is in the same line as the declaration*/
 	char* line_without_indentation = look_for_first_non_whitespace_char(line); /* This will hold the line without indentation. Will be used to get the raw value of the line so we can compare correctly with certain keywords. */
 
 	/* If the line is empty, just print it and continue to the next line.*/
 	if (is_empty(line)) {
 		fprintf(am_file, "%s", line);
-		return state;
+		return "OUTSIDE";
 	}
 
 	/* If we found a macro, then take the contents of the macro and write them unto the am_file*/
@@ -64,7 +64,7 @@ char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_n
 		/* cur_macro_node is the node that we found has a macro_name that is the same as this line. so we take the contents of the macro and paste them unto the am_file*/
 		fprintf(am_file, "%s", key_nodes->cur_macro_node->val.macro_content);
 
-		return state; /* Continue so you don't print the macro name*/
+		return "OUTSIDE"; /* Continue so you don't print the macro name*/
 	} 
 	/* Check if the line is a macro declaring line
 	we use strtok() to devide an inspected line with a space in it, since macro declaring lines come in the format: "mcro <name>", so we want to check the first word only*/
@@ -80,34 +80,30 @@ char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_n
 		/* Create a new macro node into the list and give its macro field a macro name that is the name that is in 'line'.*/
 		if (add_a_macro_node_to_list(ptr_to_remaining_of_macro_line,key_nodes)) {
 			/* If the macro node was added successfully, we can now change the state to inside a macro declaration. */
-			state = "INSIDE_MACRO_DECLARATION"; 
+			return "INSIDE_MACRO_DECLARATION"; 
 		} else {
 			fprintf(stderr, "The program got an invalid assembly instruction. \n LINE: %d\n", current_line_number);
-			state = "ERROR"; /* Change state to error since we can't have a macro name like this*/
+			return "ERROR"; /* Change state to error since we can't have a macro name like this*/
 		}
-
-		return state;
 	}
 
 	fprintf(am_file, "%s", line); /* If you got here, the line that got registered is a regular line, so just print it.*/
-	return state;
+	return "OUTSIDE";
 }
 
-char* inside_macro_declaration_state(char* line,FILE* am_file,char* state,key_macro_nodes* key_nodes) {
+char* inside_macro_declaration_state(char* line,key_macro_nodes* key_nodes) {
 	/* Get the last macro node in the list of known macros. */
 	macro_node* last_node = key_nodes->last_macro_node;
 
 	char* line_without_indentation = look_for_first_non_whitespace_char(line); /* This will hold the line without indentation. Will be used to get the raw value of the line so we can compare correctly with certain keywords. */
 
-	/* If the line is empty, just print it and continue to the next line.*/
+	/* If the line is empty, just continue to the next line.*/
 	if (is_empty(line)) {
-		fprintf(am_file, "%s", line);
-		return state;
+		return "INSIDE_MACRO_DECLARATION";
 	}
 	/* Check if the line is an end of a macro declaration. if yes, change state to outside of macro declaration and continue reading the next line*/
 	if (strcmp(strtok_copy(line_without_indentation,"\n"), "mcroend") == 0) {
-		state = "OUTSIDE";
-		return state;
+		return "OUTSIDE";
 	}
 
 	/* Concatenate this line of information to the macro_content field of this macro. a check if it is null is needed since strlen(NULL) is a segfault.*/
@@ -127,7 +123,7 @@ char* inside_macro_declaration_state(char* line,FILE* am_file,char* state,key_ma
 	}
 	strcat(last_node->val.macro_content, line);
 
-	return state;
+	return "INSIDE_MACRO_DECLARATION";
 }
 
 bool check_if_line_is_a_defined_macro(char* chosen_line,key_macro_nodes* key_nodes) {
