@@ -15,7 +15,8 @@ HELPER:
     inc unknown
     stop 
 
-to_outside
+    .string "bad str
+    add r0, r1, r2
 
 BAD_DATA: .data 5,45345345343,2,9
             .data 2,,,,,,,4
