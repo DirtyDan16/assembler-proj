@@ -73,6 +73,7 @@ char* outside_macro_declaration(char* line,FILE* am_file,char* state,key_macro_n
 
 		ptr_to_remaining_of_macro_line = (strchr(line_without_indentation,' ')+1); /* Point at the remaining part of the line (the actual name of the macro)*/
 		replace_char_with_null(ptr_to_remaining_of_macro_line,'\n');
+		trim_whitespace(ptr_to_remaining_of_macro_line);
 
 		printf(" macro name: %s\n",ptr_to_remaining_of_macro_line);
 
