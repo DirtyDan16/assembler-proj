@@ -11,6 +11,8 @@ void look_for_label_in_table_for_entries(char* label_name,key_resources* k_resou
 char* skip_label_name(char* line);
 
 static void handle_command(char* command,key_resources* key_resources);
+static int* get_instruction_table_index();
+void reset_instruction_table_index();
 static void deal_with_first_parameter(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index_in_instruction_table);
 static void deal_with_second_parameter(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index_in_instruction_table);
 

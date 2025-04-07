@@ -105,14 +105,47 @@ void free_data_structures(key_resources* resources) {
 	/* Free the macro nodes */
 	free_macro_storage(resources->macro_nodes);
 	free(resources->macro_nodes);
+
 	/* Free the label nodes */
-	free(resources->label_nodes->head_of_label_storage);
-	free(resources->label_nodes->last_label_node);
+	free_label_storage(resources->label_nodes);
 	free(resources->label_nodes);
 
 	/* Free the extern labels nodes*/
-	free(resources->extern_label_nodes->head_of_extern_label_storage);
-	free(resources->extern_label_nodes->last_extern_label_node);
+	free_extern_storage(resources->extern_label_nodes);
+	free(resources->extern_label_nodes);
 
 	free(resources); /* Free the key nodes struct itself */
 }
+
+void free_label_storage(key_label_nodes* resources) {
+	label_node* pos = resources->head_of_label_storage, *next;
+
+	while (pos != NULL) {
+		next = pos->next;
+
+		free(pos->val.label_name);
+		free(pos);
+
+		pos = next;
+	}
+
+	resources->head_of_label_storage = NULL;
+	resources->last_label_node = NULL;
+}
+
+void free_extern_storage(key_extern_label_nodes* resources) {
+	extern_label_node* pos = resources->head_of_extern_label_storage, *next;
+
+	while (pos != NULL) {
+		next = pos->next;
+
+		free(pos->val.label_name);
+		free(pos);
+
+		pos = next;
+	}
+
+	resources->head_of_extern_label_storage = NULL;
+	resources->last_extern_label_node = NULL;
+}
+

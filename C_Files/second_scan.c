@@ -12,6 +12,7 @@ void second_scan(FILE* start_of_assembly_file_pointer,key_resources* k_resources
 	}
 
 	current_line_number = 1; /* Reset the line number */
+	reset_instruction_table_index(); /* Reset the index of the instruction table - for future files we compile.*/
 
 	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 
@@ -50,34 +51,37 @@ static void go_over_read_line(char* chosen_line,key_resources* k_resources) {
 
 }
 
-static void handle_command(char* command,key_resources* k_resources) {
-	 /* This will hold the index of the cur instruction we haven't went over in the instruction table, and so we get easy access to info we gathered and the machine code of the Milas.
+static int* get_instruction_table_index() {
+	/* This will hold the index of the cur instruction we haven't went over in the instruction table, and so we get easy access to info we gathered and the machine code of the Milas.
 	 	Because we are going over the instruction table in a linear way, we are aligned with the instruction in a way that 
 		the index of the instruction table is the same as the chronological-index of the instruction we are currently looking at.
 	 	This is a static variable, so it will be the same for all calls to this function.
 	 */
-	static int index_in_instruction_table = 0;
+    static int index_in_instruction_table = 0;
+    return &index_in_instruction_table;
+}
+
+void reset_instruction_table_index() {
+    *get_instruction_table_index() = 0;  /* Reset the index to 0 at the start of the second scan. */
+}
+
+static void handle_command(char* command,key_resources* k_resources) {
+	int* index_in_instruction_table = get_instruction_table_index(); 	/* This will hold the index of the cur instruction we haven't went over in the instruction table, and so we get easy access to info we gathered and the machine code of the Milas.*/
 
 	/* This struct will be handy and convieneient since it gathers all usefull info of this sentence in a singular place! */
 	instruction_sentence* cur_command_sentence = make_command_sentence_struct(command);
 
-	
-	if (current_line_number == 1) {
-		index_in_instruction_table = 0; /* Reset the index to 0 at the start of the second scan. */
-	}
-	
-
 	/* If there are arguments added alongside the instruction, deal with the Machine Code they give appropriately.*/
 	if (cur_command_sentence->first_argument != NULL) {
-		deal_with_first_parameter(cur_command_sentence,k_resources,index_in_instruction_table);
+		deal_with_first_parameter(cur_command_sentence,k_resources,*index_in_instruction_table);
 
 		if (cur_command_sentence->second_argument != NULL) {
-			deal_with_second_parameter(cur_command_sentence,k_resources,index_in_instruction_table);
+			deal_with_second_parameter(cur_command_sentence,k_resources,*index_in_instruction_table);
 		}
 	}
 
 	/* Update the index of the instruction table. */
-	index_in_instruction_table++;
+	(*index_in_instruction_table)++;
 }
 
 static void deal_with_second_parameter(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index_in_instruction_table) {

@@ -13,4 +13,6 @@ void second_scan(FILE* start_of_assembly_file_pointer,key_resources* key_resourc
 void create_output_files(char* input_file_name,key_resources* key_resources);
 
 
-void free_macro_storage(key_macro_nodes* key_nodes);
+void free_macro_storage(key_macro_nodes* resources);
+void free_label_storage(key_label_nodes* resources);
+void free_extern_storage(key_extern_label_nodes* resources);
