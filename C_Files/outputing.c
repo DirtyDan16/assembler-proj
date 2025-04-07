@@ -86,7 +86,7 @@ void write_into_object_file(FILE* object_file,key_resources* key_resources) {
 
 		/* Print the machine code of the instruction, and the given additional info-Milas attached to it if they aren't worth to 0*/
 
-		fprintf(object_file,"%07d %06x\n",table[i].IC,table[i].code_of_command.v);
+		print_masked_hex(object_file,table[i].IC,table[i].code_of_command.v);
 		if (length_of_instruction == 2) {
 			/* 2 possibilities of this amount of length:*/
 			/*WHEN THERE'S 2 ARGUMENTS:
@@ -96,14 +96,14 @@ void write_into_object_file(FILE* object_file,key_resources* key_resources) {
 			  	in such case the second argument will ofc be worth to 0.
 			*/
 			if (table[i].code_of_first_argument.v != 0) {
-				fprintf(object_file,"%07d %06x\n",table[i].IC + 1,table[i].code_of_first_argument.v);
+				print_masked_hex(object_file,table[i].IC + 1,table[i].code_of_first_argument.v);
 			} else {
-				fprintf(object_file,"%07d %06x\n",table[i].IC + 1,table[i].code_of_second_argument.v);
+				print_masked_hex(object_file,table[i].IC + 1,table[i].code_of_second_argument.v);
 			}
 		/* when the length is 3, both arguments have an additional info-Mila attached to them. Print them both and account for the IC.*/
 		} else if (length_of_instruction == 3) {
-			fprintf(object_file,"%07d %06x\n",table[i].IC + 1,table[i].code_of_first_argument.v);
-			fprintf(object_file,"%07d %06x\n",table[i].IC + 2,table[i].code_of_second_argument.v);
+			print_masked_hex(object_file,table[i].IC + 1,table[i].code_of_first_argument.v);
+			print_masked_hex(object_file,table[i].IC + 2,table[i].code_of_second_argument.v);
 		}
 		
 		i++;
@@ -112,8 +112,15 @@ void write_into_object_file(FILE* object_file,key_resources* key_resources) {
 
 	/* Now, write the data table. */
 	for (i = 0; i < key_resources->DCF; i++) {
-		fprintf(object_file,"%07d %06x\n",key_resources->ICF + i ,key_resources->data_table[i].v);
+		print_masked_hex(object_file,key_resources->ICF + i,key_resources->data_table[i].v);
 	}
+}
+
+void print_masked_hex(FILE* file,int address,int value) {
+	unsigned int masked_value = (unsigned int)value;
+	masked_value &= 0xFFFFFF;
+
+	fprintf(file,"%07d %06x\n",address,masked_value);
 }
 
 void write_into_entries_file(FILE* entries_file,key_resources* key_resources) {

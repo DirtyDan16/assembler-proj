@@ -65,8 +65,6 @@ static void handle_command(char* command,key_resources* k_resources) {
 	if (current_line_number == 1) {
 		index_in_instruction_table = 0; /* Reset the index to 0 at the start of the second scan. */
 	}
-
-	trim_the_ampersand_symbol(cur_command_sentence);
 	
 
 	/* If there are arguments added alongside the instruction, deal with the Machine Code they give appropriately.*/
@@ -82,19 +80,6 @@ static void handle_command(char* command,key_resources* k_resources) {
 	index_in_instruction_table++;
 }
 
-void trim_the_ampersand_symbol(instruction_sentence* cur_command_sentence) {
-	if (cur_command_sentence->first_argument != NULL) {
-		if (cur_command_sentence->first_argument[0] == '&') {
-			cur_command_sentence->first_argument++;
-		}
-	}
-	if (cur_command_sentence->second_argument != NULL) {
-		if (cur_command_sentence->second_argument[0] == '&') {
-			cur_command_sentence->second_argument++;
-		}
-	}
-}
-
 static void deal_with_second_parameter(instruction_sentence* cur_command_sentence,key_resources* k_resources,int index_in_instruction_table) {
 	int type_of_second_argument = determine_type_of_asm_argument(cur_command_sentence->second_argument); /* Determine the type of the first argument*/
 	
@@ -106,7 +91,7 @@ static void deal_with_second_parameter(instruction_sentence* cur_command_sentenc
 		if (type_of_second_argument == DIRECT) {
 			deal_with_direct_type_value(cur_command_sentence,k_resources,index_in_instruction_table,2);
 		} else if (type_of_second_argument == RELATIVE) {
-		deal_with_relative_type_value(cur_command_sentence,k_resources,index_in_instruction_table,2);
+			deal_with_relative_type_value(cur_command_sentence,k_resources,index_in_instruction_table,2);
 		}
 		/* If the argument is external, add it to the list of externals (for the ext file). The place of the argument (1st or 2nd) is being accounted for the IC*/
 		check_if_the_argument_is_external(cur_command_sentence->second_argument,k_resources,k_resources->instruction_table[index_in_instruction_table].IC + 2);
@@ -125,7 +110,7 @@ static void deal_with_first_parameter(instruction_sentence* cur_command_sentence
 		if (type_of_first_argument == DIRECT) {
 			deal_with_direct_type_value(cur_command_sentence,k_resources,index_in_instruction_table,1);
 		} else if (type_of_first_argument == RELATIVE) {
-		deal_with_relative_type_value(cur_command_sentence,k_resources,index_in_instruction_table,1);
+			deal_with_relative_type_value(cur_command_sentence,k_resources,index_in_instruction_table,1);
 		}
 		/* If the argument is external, add it to the list of externals (for the ext file).  The place of the argument (1st or 2nd) is being accounted for the IC*/
 		check_if_the_argument_is_external(cur_command_sentence->first_argument,k_resources,k_resources->instruction_table[index_in_instruction_table].IC + 1);
@@ -227,22 +212,37 @@ void add_machine_code_of_label(mila* ptr_to_mila,label* label) {
 	}
 }
 
-label* find_label_node(char* label_name,key_label_nodes* k_resources) {
-	label_node* pos = k_resources->head_of_label_storage; /* This will hold the label node. */
+label* find_label_node(char* str,key_label_nodes* k_resources) {
+	char* copied_str,* label_name;
 
+	label_node* pos = k_resources->head_of_label_storage; /* This will hold the label node. */
 	if (pos == NULL) {
 		fprintf(stderr, "The program got a label as an argument for an instruction, but the file doesn't define ANY labels. \n LINE: %d\n", current_line_number);
 		does_file_have_errors = true;
 		return NULL;
 	}
 
+	copied_str = strdup(str); label_name = copied_str;
+	if (copied_str == NULL) {
+		fprintf(stderr,"Memory allocation failed.\n");
+		exit(1);
+	}
+
+
+	/* Get rid of the '&' symbol found from Relative Arguments. */
+	if (strchr(copied_str,'&') != NULL) {
+		label_name = strchr(copied_str,'&')+1;
+	}
+
+
+	/* Check every abailable label name and compare it to ours*/
 	while (pos != NULL) {
 		if (strcmp(pos->val.label_name,label_name) == 0) {
+			free(copied_str);
 			return &(pos->val);
 		}
 		pos = pos->next;
 	}
-
 	return NULL;
 }
 
@@ -256,8 +256,10 @@ void deal_with_relative_type_value(instruction_sentence* cur_command_sentence,ke
 	int current_address = (*table)[index].IC; /* This will hold the current address of the instruction. We kept our IC from last scan, so it's easy to re-refrence it :D */
 
 	char* argument = argument_number == 1 ? cur_command_sentence->first_argument : cur_command_sentence->second_argument; /* This will hold the argument. */
+
 	label* wanted_label = find_label_node(argument,k_resources->label_nodes); /* This will hold the label struct. */
 	if (wanted_label == NULL) return; /* If the label node is NULL, we can't do anything. */
+
 
 	/* We need to distinguish between 2 and 1 arguments scenarios.
 		* If there are 2 arguments, the first argument is the source and the second is the target.
@@ -290,7 +292,7 @@ void add_machine_code_of_label_relative_to(mila* ptr_to_mila,label* label,int ad
 	(*ptr_to_mila).v = (address_of_label - address_of_instruction_we_came_from) << INDEX_OF_THE_BIT_AFTER_A;
 
 	/* For Relative additional info Milas, the A bit is the bit that's always on.*/
-	(*ptr_to_mila).v += 1 < INDEX_OF_THE_A_BIT;
+	(*ptr_to_mila).v += 1 << INDEX_OF_THE_A_BIT;
 }
 
 void handle_entry_directive(char* entry_sentence,key_resources* k_resources) {
