@@ -1,7 +1,7 @@
 #include "general.h"
 
 
-/* Function that concatenates two strings without modifying the originals */
+
 char* concatenate_strings(char* str1,char* str2) {
     /* Calculate the length of the resulting string */
     size_t length = strlen(str1) + strlen(str2) + 1;  /* +1 for the null terminator */
@@ -21,23 +21,6 @@ char* concatenate_strings(char* str1,char* str2) {
     return result;  /* Return the concatenated string */
 }
 
-
-/* Function to advance the file pointer until a specific character is found */
-int advance_to_char_in_file(FILE *file, char target) {
-    int ch;
-    
-    /* Read the file character by character */
-    while ((ch = fgetc(file)) != EOF) {
-        /* If the target character is found, return success */
-        if (ch == target) {
-            return 1;
-        }
-    }
-
-    /* Return 0 if the character is not found before EOF */
-    return 0;
-}
-
 /* Function to replace the first occurrence of a character with '\0' */
 void replace_char_with_null(char *str, char target) {
     /* Find the first occurrence of the target character */
@@ -49,9 +32,7 @@ void replace_char_with_null(char *str, char target) {
     }
 }
 
-/**
- * This function behaves like strtok(), except it doesn't modify the passed in string.
- */
+
 char* strtok_copy(char* passed_in_str , char* token) {
     char* copy_str = malloc((strlen(passed_in_str) + 1));
 
@@ -104,27 +85,4 @@ char* trim_whitespace(char* str) {
     *(end + 1) = '\0';
 
     return str;
-}
-
-int int_to_binary(int value) {
-    /* Take the unsigned value of value and mask to 24 bits.
-    This is done to ensure that the value is not negative and does not exceed 24 bits */
-    unsigned int unsigned_value = (unsigned int)value & 0xFFFFFF;
-
-    int binary_value = 0;
-    int base = 1;
-    int remainder;
-
-    if (value == 0) {
-        return 0;
-    }
-
-    /* Convert the integer to binary */
-    while (unsigned_value > 0) {
-        remainder = unsigned_value % 2;
-        binary_value += remainder * base;
-        unsigned_value /= 2;
-        base *= 10;
-    }
-    return binary_value;
 }

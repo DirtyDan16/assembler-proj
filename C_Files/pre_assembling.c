@@ -27,7 +27,7 @@ FILE* pre_assembling(FILE* start_of_assembly_file_pointer,char* input_file_name,
 		if (strcmp(state,"OUTSIDE") == 0) {
 			state = outside_macro_declaration(line,am_file,key_nodes);
 		} else if (strcmp(state,"INSIDE_MACRO_DECLARATION") == 0) {
-			state = inside_macro_declaration_state(line,am_file,key_nodes);
+			state = inside_macro_declaration_state(line,key_nodes);
 		}
 
 

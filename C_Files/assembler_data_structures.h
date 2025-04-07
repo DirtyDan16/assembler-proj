@@ -98,11 +98,6 @@ typedef struct key_resources {
 
 /*------------------------------------------------------------------------------------*/
 
-
-
-
-
-
 /* A struct that holds useful info about a specific command sentence.*/
 typedef struct instruction_sentence {
 	char* command_name; /* The name of the command. */

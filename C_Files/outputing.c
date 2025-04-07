@@ -1,18 +1,5 @@
 #include "outputing.h"
 
-/**
-* This method copies the content of one file to another. 
-* first var is the copied file, and the second is the file you want to copy to
-*/
-void copy_content_from_a_file_to_another(FILE* copied_file, FILE* file_to_copy_to) {
-	int copied_char;
-	/*Go over character by character, untill you've reache the EOF, and paste it unto the wanted file */
-	while ((copied_char = fgetc(copied_file)) != EOF) {
-		fputc(copied_char, file_to_copy_to);
-	}
-}
-
-
 void create_output_files(char* input_file_name,key_resources* key_resources) {
 	FILE* object_file = NULL,* entries_file = NULL,* externals_file = NULL;
 
