@@ -135,7 +135,7 @@ void write_into_externals_file(FILE* externals_file,key_resources* key_resources
 
 FILE* create_after_macro_file(char* assembly_file_name) {
 	FILE* am_file;
-	char *am_file_path = malloc(strlen(DIRECTORY_TO_INPUT_FILES)+strlen(assembly_file_name)+strlen(".am"));
+	char *am_file_path = malloc(strlen(DIRECTORY_TO_OUTPUT_FILES)+strlen(assembly_file_name)+strlen(".am")+1);
 	
 	/* Name the output object file to the name of the assembly file we read from, and add the '.am' suffix*/
 	strcpy(am_file_path,DIRECTORY_TO_OUTPUT_FILES);
@@ -148,7 +148,7 @@ FILE* create_after_macro_file(char* assembly_file_name) {
 }
 
 void remove_am_file(char* am_file_name) {
-	char *am_file_path = malloc(strlen(DIRECTORY_TO_INPUT_FILES)+strlen(am_file_name)+strlen(".am"));
+	char *am_file_path = malloc(strlen(DIRECTORY_TO_OUTPUT_FILES)+strlen(am_file_name)+strlen(".am")+1);
 	
 	/* Name the output object file to the name of the assembly file we read from, and add the '.am' suffix*/
 	strcpy(am_file_path,DIRECTORY_TO_OUTPUT_FILES);

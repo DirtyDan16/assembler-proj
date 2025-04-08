@@ -1,0 +1,20 @@
+Asembler Project hours:
+2/28/25. 15 - 17.5 , 19 - 22  //getting input files + outputing files
+1/3/25. 14 - 19           //translating asm commands to machine code
+7/3/25. 10 - 13.75             //macros
+15/3/25. 15 -18 , 19.5 - 26.4//macros
+16/3/25. 21.5-23 //ubuntu sucks so didnt make progress sadge
+17/3/25. 15.4 - 25 //transitioning into VSCode :fire: (took 3h lol) //macros (pretty much done!)
+19/3/25. 15 -17 	//second trans
+21/3/25. 15.5-19 //first trans
+22/3/25. 12-15, 16-18.5,21-25.5//first trans - directive sentences
+23/3/25. 20 - 25.5 //first trans - command sentences
+24/3/25. 16.5-23 // replacing globals with a struct of locals to pass around
+28/3/25. 18.75-19.5,20.5-27.75 //finishing macros! // first scan
+31/3/25. 10-11,15-22,23.75-24.5 //first scan + debugging
+1/4/25. 19- 24.75//first scan debugging
+2/4/25. 12.5-15,15-16.5 //finished first scan (there's still somre extras tho) //second scan
+4/4/25. 14-23.15 //lots of second scan!!! w. debugging it
+6/4/25. 12-15.45,15.45-25.5 //finishing second scan! //outputing files
+7/4/25. 11- 14,17-18,22-26//debugging!! //DOCUMENTATION
+8/4/25. 17- 19.5 //porting the project into Ubuntu AND SUBMITTING THIS WOOOOO

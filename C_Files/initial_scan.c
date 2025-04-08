@@ -332,11 +332,17 @@ static void deal_with_first_parameter(instruction_sentence* cur_command_sentence
 }
 
 void deal_with_immediate_type_value(mila* additional_mila,char* argument) {
+	mila binary_value_of_immediate_argument;
+	unsigned int value_of_immediate_argument;
 	char* argument_without_hash = strtok(argument,"#"); /* Get the argument without the '#' char*/
-	int value_of_immediate_argument = atoi(argument_without_hash); /* Convert the direct argument to a decimal int */
+	if (argument_without_hash == NULL) {
+		fprintf(stderr, "The program got an immediate argument that has a '#' but isn't followed with anything after. \n LINE: %d\n", current_line_number);
+		does_file_have_errors = true;
+		return;
+	}
+	value_of_immediate_argument = atoi(argument_without_hash); /* Convert the direct argument to a decimal int */
 
 	/* Take the decimal value of the direct argument and bit shift it to the left so it doesn't collide with the A.R.E bits!*/
-	mila binary_value_of_immediate_argument;
 	binary_value_of_immediate_argument.v = value_of_immediate_argument << INDEX_OF_THE_BIT_AFTER_A; 
 	binary_value_of_immediate_argument.v += 1 << INDEX_OF_THE_A_BIT; /* Set the A value of the immediate argument to 1 (Absolute) */
 

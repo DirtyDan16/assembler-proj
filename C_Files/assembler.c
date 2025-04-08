@@ -1,6 +1,13 @@
 #include "assembler.h"
 
 /**
+ * @publisher: Stav Gordeev
+ * ID: 333241651
+ * 
+ * NOTE: ALL Function Documentation is found on their respective header files. (besides main)
+ */
+
+/**
  * The Main program.
  * Takes as arguments file names to be compiled. 
  * Goes over file by file, into the pre-assembling stage, the first-scan stage and the second-scan stage.
